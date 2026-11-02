@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/organic-91fb38d6-16cf-4313-843c-c48c1e0d4f6c/styles.css">
+<script src="_ds/organic-91fb38d6-16cf-4313-843c-c48c1e0d4f6c/_ds_bundle.js"></script>
+<style>
+body{margin:0}
+a{color:var(--color-accent)}a:hover{color:var(--color-accent-600)}
+.dash{--pos:var(--color-accent-2-700);--neg:var(--color-accent-700);--ex1:var(--color-accent-2-600);--ex2:var(--color-accent-500);--ex3:var(--color-accent-800);--ex4:var(--color-neutral-500);--heat0:color-mix(in srgb,var(--color-text) 8%,transparent);--heat1:var(--color-accent-2-300);--heat2:var(--color-accent-2-500);--heat3:var(--color-accent-2-700);--heat4:var(--color-accent-2-900)}
+.dash[data-theme="dark"]{--color-bg:#1d1a16;--color-surface:#2a2620;--color-text:#f2e7d5;--color-divider:color-mix(in srgb,#f2e7d5 16%,transparent);--pos:var(--color-accent-2-400);--neg:var(--color-accent-400);--ex3:var(--color-accent-300);--ex4:var(--color-neutral-400);--heat1:var(--color-accent-2-800);--heat2:var(--color-accent-2-600);--heat3:var(--color-accent-2-400);--heat4:var(--color-accent-2-200);--shadow-md:0 0 0 1px color-mix(in srgb,#f2e7d5 8%,transparent),0 4px 14px rgba(0,0,0,.35)}
+.dash[data-theme="dark"] .tag-accent-2{background:var(--color-accent-2-900);color:var(--color-accent-2-200)}
+.dash[data-theme="dark"] .tag-accent{background:var(--color-accent-900);color:var(--color-accent-200)}
+.dash[data-theme="dark"] .tag-neutral{background:color-mix(in srgb,var(--color-text) 10%,transparent);color:var(--color-text)}
+</style>
+</helmet>
+<div class="dash" data-theme="{{ theme }}" style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);transition:background .2s">
+  <div style="max-width:1480px;margin:0 auto;padding:var(--space-4) var(--space-6) var(--space-8);display:flex;flex-direction:column;gap:var(--space-4)">
+    <header style="display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:var(--space-2);margin-right:auto">
+        <div style="width:30px;height:30px;border-radius:50%;background:var(--color-accent);display:grid;place-items:center">
+          <div style="width:12px;height:12px;border-radius:50%;background:var(--color-bg)"></div>
+        </div>
+        <span style="font-family:var(--font-heading);font-size:20px">Perp desk</span>
+      </div>
+      <span title="{{ hlStatus }}" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 12px;border-radius:999px;background:var(--color-surface);max-width:360px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span style="width:8px;height:8px;flex:none;border-radius:50%;background:{{ hlDot }}"></span>{{ hlStatus }} · {{ hlAddr }}</span>
+      <span style="font-size:12px;color:color-mix(in srgb,var(--color-text) 60%,transparent)">Updated {{ updatedAgo }}</span>
+      <div class="seg" title="Layout option">
+        <sc-for list="{{ layouts }}" as="l" hint-placeholder-count="3">
+          <label class="seg-opt" style="font-size:12px;padding:6px 10px"><input type="radio" name="layout" checked="{{ l.checked }}" onChange="{{ l.select }}">{{ l.label }}</label>
+        </sc-for>
+      </div>
+      <button class="btn btn-secondary" onClick="{{ refresh }}">Refresh</button>
+      <button class="btn btn-secondary btn-icon" onClick="{{ toggleTheme }}" title="Toggle theme">
+        <sc-if value="{{ isDark }}" hint-placeholder-val="{{ false }}">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path></svg>
+        </sc-if>
+        <sc-if value="{{ isLight }}" hint-placeholder-val="{{ true }}">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>
+        </sc-if>
+      </button>
+    </header>
+
+    <div style="display:flex;align-items:flex-end;gap:var(--space-4);flex-wrap:wrap;margin-top:var(--space-2)">
+      <div style="margin-right:auto;display:flex;flex-direction:column;gap:var(--space-3)">
+        <h1 style="margin:0">{{ title }}</h1>
+        <div class="seg">
+          <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="5">
+            <label class="seg-opt" style="padding:8px 16px;font-size:14px"><input type="radio" name="tab" checked="{{ t.checked }}" onChange="{{ t.select }}"><span style="width:8px;height:8px;border-radius:50%;background:{{ t.color }}"></span>{{ t.label }}</label>
+          </sc-for>
+        </div>
+      </div>
+      <div class="seg">
+        <sc-for list="{{ ranges }}" as="r" hint-placeholder-count="4">
+          <label class="seg-opt" style="padding:8px 14px"><input type="radio" name="range" checked="{{ r.checked }}" onChange="{{ r.select }}">{{ r.label }}</label>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="{{ gridStyle }}">
+      <section class="card elev-sm" style="grid-area:kpi;padding:var(--space-4) var(--space-6);gap:var(--space-4);min-width:0">
+        <div style="display:flex;flex-wrap:wrap;gap:var(--space-4) var(--space-8)">
+          <div style="display:flex;flex-direction:column;gap:2px;min-width:150px">
+            <span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:color-mix(in srgb,var(--color-text) 60%,transparent)">Balance</span>
+            <span style="font-family:var(--font-heading);font-size:32px;line-height:1.1">{{ kpi.balance }}</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:2px;min-width:130px">
+            <span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:color-mix(in srgb,var(--color-text) 60%,transparent)">Unrealized PnL</span>
+            <span style="font-family:var(--font-heading);font-size:24px;line-height:1.3;color:{{ kpi.upnlColor }}">{{ kpi.upnl }}</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:2px;min-width:130px">
+            <span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:color-mix(in srgb,var(--color-text) 60%,transparent)">Realized PnL · {{ rangeLabel }}</span>
+            <span style="font-family:var(--font-heading);font-size:24px;line-height:1.3;color:{{ kpi.realColor }}">{{ kpi.real }}</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:2px;min-width:200px;font-size:13px;font-variant-numeric:tabular-nums">
+            <sc-for list="{{ flows }}" as="f" hint-placeholder-count="4">
+              <span style="display:flex;justify-content:space-between;gap:var(--space-3)"><span style="color:color-mix(in srgb,var(--color-text) 65%,transparent)">{{ f.label }}</span><span style="color:{{ f.color }}">{{ f.val }}</span></span>
+            </sc-for>
+          </div>
+        </div>
+        <sc-if value="{{ isAll }}" hint-placeholder-val="{{ true }}">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:var(--space-2)">
+            <sc-for list="{{ exBreakdown }}" as="e" hint-placeholder-count="4">
+              <button onClick="{{ e.select }}" style="all:unset;cursor:pointer;display:flex;flex-direction:column;gap:6px;padding:var(--space-2) var(--space-3);border-radius:var(--radius-md);background:color-mix(in srgb,var(--color-bg) 55%,transparent)" style-hover="background:var(--color-bg)">
+                <span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:{{ e.color }}"></span>{{ e.name }}<sc-if value="{{ e.mock }}" hint-placeholder-val="{{ false }}"><span class="tag tag-neutral" style="padding:0 7px;font-size:10px;margin-left:auto">Mock</span></sc-if></span>
+                <span style="display:flex;align-items:baseline;justify-content:space-between;gap:8px"><span style="font-size:15px;font-variant-numeric:tabular-nums">{{ e.balance }}</span><span style="font-size:12px;font-variant-numeric:tabular-nums;color:{{ e.upnlColor }}">{{ e.upnl }}</span></span>
+                <span style="height:5px;border-radius:999px;background:color-mix(in srgb,var(--color-text) 8%,transparent);overflow:hidden"><span style="display:block;height:100%;width:{{ e.share }}%;background:{{ e.color }};border-radius:999px"></span></span>
+              </button>
+            </sc-for>
+          </div>
+        </sc-if>
+      </section>
+
+      <section class="card elev-sm" style="grid-area:curve;padding:var(--space-4) var(--space-6);gap:var(--space-3);min-width:0">
+        <div style="display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap">
+          <h4 style="margin:0;margin-right:auto">PnL curve</h4>
+          <sc-if value="{{ isAll }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <sc-for list="{{ toggles }}" as="g" hint-placeholder-count="5">
+                <button onClick="{{ g.toggle }}" style="display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:12px;color:var(--color-text);padding:4px 10px;border-radius:999px;cursor:pointer;border:1px solid var(--color-divider);background:transparent;opacity:{{ g.opacity }}" style-hover="background:color-mix(in srgb,var(--color-text) 7%,transparent)">
+                  <span style="width:10px;height:10px;border-radius:50%;border:2px solid {{ g.color }};background:{{ g.fill }}"></span>{{ g.name }}
+                </button>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:var(--space-2)">
+          <span style="font-family:var(--font-heading);font-size:28px;color:{{ kpi.realColor }}">{{ kpi.real }}</span>
+          <span style="font-size:13px;color:color-mix(in srgb,var(--color-text) 60%,transparent)">realized over {{ rangeLong }}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:var(--space-2);flex:1;min-height:240px">
+          <div style="display:flex;flex-direction:column;justify-content:space-between;font-size:11px;text-align:right;color:color-mix(in srgb,var(--color-text) 55%,transparent);font-variant-numeric:tabular-nums;padding-bottom:22px">
+            <sc-for list="{{ yTicks }}" as="y" hint-placeholder-count="4"><span style="line-height:1">{{ y }}</span></sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+            <div style="position:relative;flex:1;min-height:200px" onMouseMove="{{ onChartMove }}" onMouseLeave="{{ onChartLeave }}">
+              {{ chartSvg }}
+              <sc-if value="{{ hasHover }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute;top:0;bottom:0;left:{{ hover.pct }}%;width:1px;background:var(--color-divider);pointer-events:none"></div>
+                <sc-for list="{{ hover.dots }}" as="d">
+                  <div style="position:absolute;left:{{ hover.pct }}%;top:{{ d.top }}%;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;background:{{ d.color }};box-shadow:0 0 0 2px var(--color-surface);pointer-events:none"></div>
+                </sc-for>
+                <div class="elev-md" style="position:absolute;top:8px;left:{{ hover.pct }}%;transform:{{ hover.transform }};background:var(--color-bg);border-radius:var(--radius-md);padding:10px 14px;font-size:12px;pointer-events:none;min-width:170px;display:flex;flex-direction:column;gap:4px;z-index:2">
+                  <span style="font-weight:600">{{ hover.date }}</span>
+                  <sc-for list="{{ hover.rows }}" as="hr">
+                    <span style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:{{ hr.color }}"></span><span style="margin-right:auto">{{ hr.name }}</span><span style="font-variant-numeric:tabular-nums;color:{{ hr.valColor }}">{{ hr.val }}</span></span>
+                  </sc-for>
+                </div>
+              </sc-if>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:color-mix(in srgb,var(--color-text) 55%,transparent);height:16px">
+              <sc-for list="{{ xTicks }}" as="x" hint-placeholder-count="5"><span>{{ x }}</span></sc-for>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card elev-sm" style="grid-area:heat;padding:var(--space-4) var(--space-6);gap:var(--space-3);min-width:0">
+        <div style="display:flex;align-items:baseline;gap:var(--space-2);flex-wrap:wrap">
+          <h4 style="margin:0;margin-right:auto">Activity</h4>
+          <span style="font-size:12px;color:color-mix(in srgb,var(--color-text) 60%,transparent)">{{ heat.total }} trades · last {{ heat.weeks }} weeks</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <div style="display:flex;gap:3px">
+            <sc-for list="{{ heat.cols }}" as="w" hint-placeholder-count="26">
+              <div style="flex:1;min-width:0;font-size:10px;white-space:nowrap;overflow:visible;color:color-mix(in srgb,var(--color-text) 55%,transparent);height:14px">{{ w.month }}</div>
+            </sc-for>
+          </div>
+          <div style="display:flex;gap:3px">
+            <sc-for list="{{ heat.cols }}" as="w" hint-placeholder-count="26">
+              <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
+                <sc-for list="{{ w.days }}" as="d">
+                  <div title="{{ d.title }}" style="width:100%;aspect-ratio:1;border-radius:50%;background:{{ d.bg }}"></div>
+                </sc-for>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:color-mix(in srgb,var(--color-text) 55%,transparent);justify-content:flex-end">
+          <span style="margin-right:4px">Less</span>
+          <span style="width:10px;height:10px;border-radius:50%;background:var(--heat0)"></span>
+          <span style="width:10px;height:10px;border-radius:50%;background:var(--heat1)"></span>
+          <span style="width:10px;height:10px;border-radius:50%;background:var(--heat2)"></span>
+          <span style="width:10px;height:10px;border-radius:50%;background:var(--heat3)"></span>
+          <span style="width:10px;height:10px;border-radius:50%;background:var(--heat4)"></span>
+          <span style="margin-left:4px">More</span>
+        </div>
+      </section>
+
+      <section class="card elev-sm" style="grid-area:best;padding:var(--space-4) var(--space-6);gap:var(--space-2);min-width:0">
+        <div style="display:flex;align-items:baseline;gap:var(--space-2)">
+          <h4 style="margin:0;margin-right:auto">Best trades</h4>
+          <span class="tag tag-accent-2">Top 5 · {{ rangeLabel }}</span>
+        </div>
+        <sc-for list="{{ best }}" as="t" hint-placeholder-count="5">
+          <div style="display:grid;grid-template-columns:24px minmax(0,1fr) auto;align-items:center;gap:var(--space-3);padding:8px 0;border-bottom:1px solid color-mix(in srgb,var(--color-text) 8%,transparent)">
+            <span style="width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;background:color-mix(in srgb,var(--pos) 15%,transparent);color:var(--pos)">{{ t.rank }}</span>
+            <div style="display:flex;flex-direction:column;min-width:0">
+              <span style="display:flex;align-items:center;gap:6px;font-weight:600;font-size:14px">{{ t.sym }}<span class="{{ t.sideClass }}" style="padding:1px 8px">{{ t.side }}</span></span>
+              <span style="font-size:12px;color:color-mix(in srgb,var(--color-text) 55%,transparent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.meta }}</span>
+            </div>
+            <span style="font-variant-numeric:tabular-nums;font-weight:600;color:var(--pos)">{{ t.pnl }}</span>
+          </div>
+        </sc-for>
+        <sc-if value="{{ bestEmpty }}" hint-placeholder-val="{{ false }}"><p class="text-muted" style="font-size:13px;margin:var(--space-2) 0">No winning trades in this range.</p></sc-if>
+      </section>
+
+      <section class="card elev-sm" style="grid-area:worst;padding:var(--space-4) var(--space-6);gap:var(--space-2);min-width:0">
+        <div style="display:flex;align-items:baseline;gap:var(--space-2)">
+          <h4 style="margin:0;margin-right:auto">Worst trades</h4>
+          <span class="tag tag-accent">Bottom 5 · {{ rangeLabel }}</span>
+        </div>
+        <sc-for list="{{ worst }}" as="t" hint-placeholder-count="5">
+          <div style="display:grid;grid-template-columns:24px minmax(0,1fr) auto;align-items:center;gap:var(--space-3);padding:8px 0;border-bottom:1px solid color-mix(in srgb,var(--color-text) 8%,transparent)">
+            <span style="width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;background:color-mix(in srgb,var(--neg) 15%,transparent);color:var(--neg)">{{ t.rank }}</span>
+            <div style="display:flex;flex-direction:column;min-width:0">
+              <span style="display:flex;align-items:center;gap:6px;font-weight:600;font-size:14px">{{ t.sym }}<span class="{{ t.sideClass }}" style="padding:1px 8px">{{ t.side }}</span></span>
+              <span style="font-size:12px;color:color-mix(in srgb,var(--color-text) 55%,transparent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.meta }}</span>
+            </div>
+            <span style="font-variant-numeric:tabular-nums;font-weight:600;color:var(--neg)">{{ t.pnl }}</span>
+          </div>
+        </sc-for>
+        <sc-if value="{{ worstEmpty }}" hint-placeholder-val="{{ false }}"><p class="text-muted" style="font-size:13px;margin:var(--space-2) 0">No losing trades in this range.</p></sc-if>
+      </section>
+
+      <section class="card elev-sm" style="grid-area:pos;padding:var(--space-4) var(--space-6);gap:var(--space-3);min-width:0">
+        <div style="display:flex;align-items:baseline;gap:var(--space-2);flex-wrap:wrap">
+          <h4 style="margin:0">Open positions</h4>
+          <span class="tag tag-neutral">{{ posCount }}</span>
+          <span style="margin-left:auto;font-size:12px;color:color-mix(in srgb,var(--color-text) 60%,transparent)">{{ posNotional }} notional</span>
+        </div>
+        <div style="overflow-x:auto;margin:0 calc(var(--space-2) * -1)">
+          <table class="table" style="min-width:1180px;font-variant-numeric:tabular-nums;font-size:13px">
+            <thead>
+              <tr>
+                <sc-if value="{{ isAll }}" hint-placeholder-val="{{ true }}"><th>Exchange</th></sc-if>
+                <th>Symbol</th><th>Side</th><th style="text-align:right">Size</th><th style="text-align:right">Entry</th><th style="text-align:right">Mark</th><th style="text-align:right">Liq.</th><th style="text-align:right">Lev.</th><th style="text-align:right">Margin</th><th style="text-align:right">Unrealized PnL</th><th style="text-align:right">ROE</th><th style="text-align:right">Funding</th><th style="text-align:right">Opened</th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{ positions }}" as="p" hint-placeholder-count="6">
+                <tr>
+                  <sc-if value="{{ isAll }}" hint-placeholder-val="{{ true }}"><td><span style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap"><span style="width:8px;height:8px;border-radius:50%;background:{{ p.exColor }}"></span>{{ p.exName }}</span></td></sc-if>
+                  <td style="font-weight:600">{{ p.sym }}</td>
+                  <td><span class="{{ p.sideClass }}">{{ p.side }}</span></td>
+                  <td style="text-align:right;white-space:nowrap">{{ p.size }}</td>
+                  <td style="text-align:right">{{ p.entry }}</td>
+                  <td style="text-align:right">{{ p.mark }}</td>
+                  <td style="text-align:right;color:var(--neg)">{{ p.liq }}</td>
+                  <td style="text-align:right">{{ p.lev }}</td>
+                  <td style="text-align:right">{{ p.margin }}</td>
+                  <td style="text-align:right;font-weight:600;color:{{ p.upnlColor }}">{{ p.upnl }}</td>
+                  <td style="text-align:right;color:{{ p.upnlColor }}">{{ p.roe }}</td>
+                  <td style="text-align:right;color:{{ p.fundColor }}">{{ p.funding }}</td>
+                  <td style="text-align:right;white-space:nowrap;color:color-mix(in srgb,var(--color-text) 60%,transparent)">{{ p.opened }}</td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;hlAddress&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;0x567338a1bDB6D7cE2AacCa25b69fc1a5c82708cA&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;layout&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;stacked&quot;,&quot;rail&quot;,&quot;bento&quot;],&quot;default&quot;:&quot;stacked&quot;,&quot;tsType&quot;:&quot;'stacked'|'rail'|'bento'&quot;},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;'light'|'dark'&quot;},&quot;heatWeeks&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;min&quot;:8,&quot;max&quot;:52,&quot;step&quot;:1,&quot;default&quot;:26,&quot;tsType&quot;:&quot;number&quot;}}">
+class Component extends DCLogic {
+  state = { tab: 'all', range: '7D', layout: null, theme: null, hidden: {}, hover: null, narrow: false, updated: Date.now() };
+
+  componentDidMount() {
+    this.onResize = () => this.setState({ narrow: window.innerWidth < 980 });
+    this.onResize();
+    window.addEventListener('resize', this.onResize);
+    this.timer = setInterval(() => this.forceUpdate(), 10000);
+    this.startHL();
+  }
+  componentWillUnmount() { window.removeEventListener('resize', this.onResize); clearInterval(this.timer); clearInterval(this.stateTimer); this.hlClose && this.hlClose(); }
+
+  hlAddress() {
+    const q = new URLSearchParams(location.search).get('address');
+    return q || this.props.hlAddress || '0x567338a1bDB6D7cE2AacCa25b69fc1a5c82708cA';
+  }
+  async startHL() {
+    this.hlClose && this.hlClose(); clearInterval(this.stateTimer);
+    this.setState({ hl: 'loading', hlError: null });
+    try {
+      const mod = this.hlMod || (this.hlMod = await import(new URL('hl.js', location.href).href));
+      const D = this.data();
+      this.hlData = await mod.load(this.hlAddress(), D.start);
+      this.applyHL();
+      this.hlClose = mod.connect(this.hlData, kind => this.scheduleHL(kind), st => this.setState({ hl: st }));
+      this.stateTimer = setInterval(() => mod.refreshStates(this.hlData).then(() => this.scheduleHL('state')).catch(() => {}), 60000);
+    } catch (err) {
+      this.setState({ hl: 'error', hlError: err.message || String(err) });
+    }
+  }
+  scheduleHL() {
+    if (this.hlPending) return;
+    this.hlPending = setTimeout(() => { this.hlPending = null; this.applyHL(); }, 1000);
+  }
+  applyHL() {
+    const D = this.data(), e = D.ex[0];
+    Object.assign(e, this.hlMod.build(this.hlData, D.start, D.HOURS));
+    e.trades.forEach(t => { t.ex = e; });
+    this.setState({ updated: Date.now() });
+  }
+  componentDidUpdate(prev) {
+    if (prev.layout !== this.props.layout && this.state.layout) this.setState({ layout: null });
+    if (prev.theme !== this.props.theme && this.state.theme) this.setState({ theme: null });
+  }
+
+  // Replace with real API adapters (one per exchange) returning { balance, trades[], positions[] }.
+  data() {
+    if (this._d) return this._d;
+    let seed = 7;
+    const rng = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+    const gauss = () => (rng() + rng() + rng() - 1.5) / 1.5;
+    const syms = { BTC: 112400, ETH: 4120, SOL: 196, HYPE: 41.8, DOGE: 0.2134, ARB: 0.784, SUI: 3.42, LINK: 22.6 };
+    const symList = Object.keys(syms);
+    const DAYS = 371, HOURS = DAYS * 24;
+    const now = Math.floor(Date.now() / 3600e3) * 3600e3;
+    const start = now - HOURS * 3600e3;
+    const ex = [
+      { id: 'hyperliquid', name: 'Hyperliquid', color: 'var(--ex1)', bal: 48210, rate: 7 },
+      { id: 'perpl', name: 'Perpl', color: 'var(--ex2)', bal: 21540, rate: 4 },
+      { id: 'arcus', name: 'Arcus', color: 'var(--ex3)', bal: 15890, rate: 3 },
+      { id: 'extended', name: 'Extended', color: 'var(--ex4)', bal: 9320, rate: 2.5 }
+    ];
+    ex.forEach((e, ei) => {
+      const hourly = new Float64Array(HOURS);
+      e.trades = [];
+      let regime = 1;
+      e.funding = [];
+      for (let d = 0; d < DAYS; d++) {
+        e.funding.push({ t: start + d * 86400e3, usdc: gauss() * e.bal * 0.0002 });
+        if (rng() < 0.08) regime = 0.3 + rng() * 1.6;
+        const dow = new Date(start + d * 86400e3).getDay();
+        const r = e.rate * regime * (dow === 0 || dow === 6 ? 0.45 : 1);
+        const n = rng() < 0.15 ? 0 : Math.floor(rng() * r * 2);
+        for (let k = 0; k < n; k++) {
+          const h = Math.min(HOURS - 1, d * 24 + Math.floor(rng() * 24));
+          const sym = symList[Math.floor(rng() * (ei === 0 ? 8 : 5))];
+          const pnl = (gauss() + 0.06) * e.bal * 0.0035 * (rng() < 0.08 ? 4 : 1);
+          e.trades.push({ ex: e, sym, side: rng() < 0.55 ? 'Long' : 'Short', pnl, fee: e.bal * 0.0035 * 0.12 * rng(), t: start + h * 3600e3 + Math.floor(rng() * 3600e3) });
+          hourly[h] += pnl;
+        }
+      }
+      e.cum = new Float64Array(HOURS + 1);
+      for (let i = 0; i < HOURS; i++) e.cum[i + 1] = e.cum[i] + hourly[i];
+      e.positions = [];
+      const np = 2 + Math.floor(rng() * 3);
+      for (let i = 0; i < np; i++) {
+        const sym = symList[Math.floor(rng() * symList.length)];
+        const dir = rng() < 0.6 ? 1 : -1;
+        const entry = syms[sym] * (1 + gauss() * 0.04);
+        const lev = [3, 5, 5, 10, 10, 15, 20][Math.floor(rng() * 7)];
+        const notional = e.bal * (0.15 + rng() * 0.5);
+        e.positions.push({ sym, dir, entry, mark: syms[sym], lev, size: notional / entry, funding: -dir * notional * rng() * 0.002, opened: now - Math.floor(rng() * 20 * 86400e3) });
+      }
+    });
+    ex.forEach(e => { e.mock = e.id !== 'hyperliquid'; });
+    Object.assign(ex[0], { bal: 0, trades: [], funding: [], positions: [], cum: new Float64Array(HOURS + 1) });
+    this._d = { ex, start, now, HOURS, DAYS, syms };
+    return this._d;
+  }
+
+  usd(v, sign, dec = 2) {
+    const s = Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+    return (v < 0 ? '−' : sign && v > 0 ? '+' : '') + '$' + s;
+  }
+  compact(v) {
+    const a = Math.abs(v), sg = v < 0 ? '−' : '';
+    if (a >= 1e6) return sg + '$' + (a / 1e6).toFixed(1) + 'M';
+    if (a >= 1e3) return sg + '$' + (a / 1e3).toFixed(1) + 'k';
+    return sg + '$' + a.toFixed(0);
+  }
+  price(v) {
+    const d = v >= 1000 ? 1 : v >= 10 ? 2 : v >= 1 ? 3 : 4;
+    return v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+  }
+  qty(v) { const d = v >= 1000 ? 0 : v >= 10 ? 2 : v >= 1 ? 3 : 4; return v.toLocaleString('en-US', { maximumFractionDigits: d }); }
+  date(t, withTime) {
+    const o = withTime ? { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false } : { month: 'short', day: 'numeric' };
+    return new Date(t).toLocaleString('en-US', o);
+  }
+
+  renderVals() {
+    const D = this.data(), s = this.state;
+    const layout = s.layout || this.props.layout || 'stacked';
+    const theme = s.theme || this.props.theme || 'light';
+    const weeks = Math.max(8, Math.min(52, this.props.heatWeeks ?? 26));
+    const isAll = s.tab === 'all';
+    const exs = isAll ? D.ex : D.ex.filter(e => e.id === s.tab);
+    const pos = 'var(--pos)', neg = 'var(--neg)';
+    const pc = v => v >= 0 ? pos : neg;
+
+    const R = { '24h': [24, 1, '24h', 'the last 24 hours'], '7D': [168, 2, '7D', 'the last 7 days'], '30D': [720, 6, '30D', 'the last 30 days'], 'All': [D.HOURS, 24, 'All time', 'all time'] }[s.range];
+    const hrs = R[0], step = R[1], from = D.HOURS - hrs, tFrom = D.start + from * 3600e3;
+    const idxs = []; for (let p = 0; p <= hrs; p += step) idxs.push(from + p);
+    if (idxs[idxs.length - 1] !== D.HOURS) idxs.push(D.HOURS);
+    const N = idxs.length;
+
+    const exSeries = exs.map(e => ({ id: e.id, name: e.name, color: e.color, vals: idxs.map(i => e.cum[i] - e.cum[from]) }));
+    let all = exSeries;
+    if (isAll) {
+      const total = { id: 'total', name: 'Total', color: 'var(--color-text)', vals: idxs.map((_, k) => exSeries.reduce((a, x) => a + x.vals[k], 0)) };
+      all = [total, ...exSeries];
+    }
+    const visible = isAll ? all.filter(x => !s.hidden[x.id]) : all;
+
+    const W = 1000, HH = 260;
+    let mn = 0, mx = 0;
+    visible.forEach(se => se.vals.forEach(v => { if (v < mn) mn = v; if (v > mx) mx = v; }));
+    if (mx === mn) mx = mn + 1;
+    const pad = (mx - mn) * 0.08; mn -= pad; mx += pad;
+    const y = v => HH - (v - mn) / (mx - mn) * HH;
+    const x = i => N > 1 ? i / (N - 1) * W : 0;
+    const h = React.createElement;
+    const line = vals => vals.map((v, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1)).join('');
+    const y0 = y(0);
+    const kids = [h('line', { key: 'z', x1: 0, x2: W, y1: y0, y2: y0, style: { stroke: 'var(--color-divider)', strokeWidth: 1.5, strokeDasharray: '5 5', vectorEffect: 'non-scaling-stroke' } })];
+    if (visible[0]) kids.push(h('path', { key: 'a', d: line(visible[0].vals) + `L${W} ${y0}L0 ${y0}Z`, style: { fill: visible[0].color, opacity: 0.08 } }));
+    visible.slice().reverse().forEach(se => kids.push(h('path', { key: se.id, d: line(se.vals), style: { fill: 'none', stroke: se.color, strokeWidth: se === visible[0] ? 2.75 : 1.75, strokeLinejoin: 'round', strokeLinecap: 'round', vectorEffect: 'non-scaling-stroke' } })));
+    const chartSvg = h('svg', { viewBox: `0 0 ${W} ${HH}`, preserveAspectRatio: 'none', style: { position: 'absolute', inset: 0, width: '100%', height: '100%', overflow: 'visible', pointerEvents: 'none' } }, kids);
+    const yTicks = [0, 1, 2, 3].map(k => this.compact(mx - (mx - mn) * k / 3));
+    const xTicks = [0, 0.25, 0.5, 0.75, 1].map(f => { const t = D.start + idxs[Math.round(f * (N - 1))] * 3600e3; return s.range === '24h' ? new Date(t).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : this.date(t); });
+
+    let hover = null;
+    if (s.hover != null && visible.length) {
+      const k = Math.min(N - 1, s.hover), pct = N > 1 ? k / (N - 1) * 100 : 0;
+      hover = {
+        pct, transform: pct > 55 ? 'translateX(calc(-100% - 12px))' : 'translateX(12px)',
+        date: this.date(D.start + idxs[k] * 3600e3, s.range !== 'All'),
+        dots: visible.map(se => ({ color: se.color, top: y(se.vals[k]) / HH * 100 })),
+        rows: visible.map(se => ({ name: se.name, color: se.color, val: this.usd(se.vals[k], true), valColor: pc(se.vals[k]) }))
+      };
+    }
+
+    const trades = exs.flatMap(e => e.trades).filter(t => t.t >= tFrom);
+    const realized = exs.reduce((a, e) => a + e.cum[D.HOURS] - e.cum[from], 0);
+    const fees = trades.reduce((a, t) => a + (t.fee || 0), 0);
+    const fundingTot = exs.reduce((a, e) => a + (e.funding || []).reduce((b, f) => f.t >= tFrom ? b + f.usdc : b, 0), 0);
+    const net = realized - fees + fundingTot;
+    const tRow = (t, i) => ({ rank: i + 1, sym: t.sym + '-PERP', side: t.side, sideClass: t.side === 'Long' ? 'tag tag-accent-2' : 'tag tag-accent', pnl: this.usd(t.pnl, true), meta: (isAll ? t.ex.name + ' · ' : '') + (t.sub ? t.sub + ' · ' : '') + this.date(t.t, true) });
+    const best = trades.filter(t => t.pnl > 0).sort((a, b) => b.pnl - a.pnl).slice(0, 5).map(tRow);
+    const worst = trades.filter(t => t.pnl < 0).sort((a, b) => a.pnl - b.pnl).slice(0, 5).map(tRow);
+
+    const posRaw = exs.flatMap(e => e.positions.map(p => ({ e, p })));
+    let upTot = 0, notional = 0;
+    const positions = posRaw.map(({ e, p }) => {
+      const up = (p.mark - p.entry) * p.size * p.dir, margin = p.margin ?? p.entry * p.size / p.lev;
+      upTot += up; notional += p.mark * p.size;
+      const liq = p.liq !== undefined ? p.liq : p.entry * (1 - p.dir * 0.9 / p.lev);
+      return {
+        exName: e.name + (p.sub ? ' · ' + p.sub : ''), exColor: e.color, sym: p.sym + '-PERP', side: p.dir > 0 ? 'Long' : 'Short', sideClass: p.dir > 0 ? 'tag tag-accent-2' : 'tag tag-accent',
+        size: this.qty(p.size) + ' ' + p.sym, entry: this.price(p.entry), mark: this.price(p.mark), liq: liq == null ? '—' : this.price(liq),
+        lev: p.lev + '×', margin: this.usd(margin), upnl: this.usd(up, true), upnlColor: pc(up), roe: (up >= 0 ? '+' : '−') + Math.abs(up / margin * 100).toFixed(2) + '%',
+        funding: this.usd(p.funding, true), fundColor: pc(p.funding), opened: p.opened ? this.date(p.opened, true) : '—'
+      };
+    });
+    const exUp = e => e.positions.reduce((a, p) => a + (p.mark - p.entry) * p.size * p.dir, 0);
+    const balance = exs.reduce((a, e) => a + e.bal + exUp(e), 0);
+    const totalBal = D.ex.reduce((a, e) => a + e.bal + exUp(e), 0);
+    const exBreakdown = D.ex.map(e => { const u = exUp(e), b = e.bal + u; return { name: e.name, mock: e.mock, color: e.color, balance: this.usd(b, false, 0), upnl: this.usd(u, true, 0), upnlColor: pc(u), share: totalBal > 0 ? Math.max(0, b / totalBal * 100).toFixed(1) : 0, select: () => this.setState({ tab: e.id, hover: null }) }; });
+
+    // heatmap
+    const counts = {};
+    const key = t => { const d = new Date(t); return d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate(); };
+    exs.forEach(e => e.trades.forEach(t => { const k = key(t.t); counts[k] = (counts[k] || 0) + 1; }));
+    const today = new Date(D.now); today.setHours(0, 0, 0, 0);
+    const endOfWeek = new Date(today); endOfWeek.setDate(today.getDate() + (6 - (today.getDay() + 6) % 7));
+    const startDay = new Date(endOfWeek); startDay.setDate(endOfWeek.getDate() - weeks * 7 + 1);
+    let maxC = 1, heatTotal = 0;
+    const cols = [];
+    let lastMonth = -1;
+    for (let w = 0; w < weeks; w++) {
+      const days = [];
+      let month = '';
+      for (let d = 0; d < 7; d++) {
+        const dt = new Date(startDay); dt.setDate(startDay.getDate() + w * 7 + d);
+        const future = dt > today;
+        const c = future ? 0 : counts[key(dt.getTime())] || 0;
+        if (!future) { maxC = Math.max(maxC, c); heatTotal += c; }
+        if (d === 0 && dt.getMonth() !== lastMonth) { month = w === 0 && dt.getDate() > 14 ? '' : dt.toLocaleString('en-US', { month: 'short' }); lastMonth = dt.getMonth(); }
+        days.push({ c, future, title: future ? '' : `${c} trade${c === 1 ? '' : 's'} · ${dt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}` });
+      }
+      cols.push({ month, days });
+    }
+    cols.forEach(col => col.days.forEach(d => { d.bg = d.future ? 'transparent' : `var(--heat${d.c === 0 ? 0 : Math.min(4, Math.ceil(d.c / maxC * 4))})`; }));
+
+    const narrow = s.narrow;
+    const L = {
+      stacked: ['minmax(0,1.5fr) minmax(0,1fr)', '"kpi heat" "curve curve" "pos pos" "best worst"'],
+      rail: ['minmax(300px,380px) minmax(0,1fr)', '"kpi curve" "heat curve" "best pos" "worst pos"'],
+      bento: ['repeat(3,minmax(0,1fr))', '"kpi kpi heat" "curve curve best" "curve curve worst" "pos pos pos"']
+    }[layout];
+    const gridStyle = { display: 'grid', gap: 'var(--space-4)', gridTemplateColumns: narrow ? 'minmax(0,1fr)' : L[0], gridTemplateAreas: narrow ? '"kpi" "curve" "heat" "pos" "best" "worst"' : L[1], alignItems: 'stretch' };
+
+    const exById = Object.fromEntries(D.ex.map(e => [e.id, e]));
+    const ago = Math.round((Date.now() - s.updated) / 1000);
+
+    return {
+      theme, isDark: theme === 'dark', isLight: theme !== 'dark',
+      toggleTheme: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }),
+      refresh: () => { D.ex.forEach(e => e.mock && e.positions.forEach(p => { p.mark *= 1 + (Math.random() - 0.5) * 0.006; })); this.startHL(); },
+      updatedAgo: ago < 5 ? 'just now' : ago < 60 ? ago + 's ago' : Math.round(ago / 60) + 'm ago',
+      hlStatus: { loading: 'Hyperliquid loading…', live: 'Hyperliquid live', reconnecting: 'Hyperliquid reconnecting…', error: 'Hyperliquid error: ' + (s.hlError || '') }[s.hl || 'loading'],
+      hlDot: s.hl === 'live' ? 'var(--pos)' : s.hl === 'error' ? 'var(--neg)' : 'var(--color-neutral-400)',
+      hlAddr: (() => { const a = this.hlAddress(); return a.slice(0, 6) + '…' + a.slice(-4); })(),
+      flows: [
+        { label: 'Gross realized', val: this.usd(realized, true), color: pc(realized) },
+        { label: 'Fees', val: this.usd(-fees, true), color: pc(-fees) },
+        { label: 'Funding', val: this.usd(fundingTot, true), color: pc(fundingTot) },
+        { label: 'Net', val: this.usd(net, true), color: pc(net), strong: true }
+      ],
+      layouts: [['stacked', 'Stacked'], ['rail', 'Rail'], ['bento', 'Bento']].map(([id, label]) => ({ label, checked: layout === id, select: () => this.setState({ layout: id }) })),
+      title: isAll ? 'All exchanges' : exById[s.tab].name,
+      tabs: [{ id: 'all', label: 'All', color: 'var(--color-text)' }, ...D.ex.map(e => ({ id: e.id, label: e.name, color: e.color }))].map(t => ({ ...t, checked: s.tab === t.id, select: () => this.setState({ tab: t.id, hover: null }) })),
+      ranges: ['24h', '7D', '30D', 'All'].map(r => ({ label: r, checked: s.range === r, select: () => this.setState({ range: r, hover: null }) })),
+      rangeLabel: R[2], rangeLong: R[3], isAll,
+      gridStyle,
+      kpi: { balance: this.usd(balance), upnl: this.usd(upTot, true), upnlColor: pc(upTot), real: this.usd(realized, true), realColor: pc(realized) },
+      exBreakdown,
+      toggles: all.map(se => { const on = !s.hidden[se.id]; return { name: se.name, color: se.color, fill: on ? se.color : 'transparent', opacity: on ? 1 : 0.55, toggle: () => this.setState(st => ({ hidden: { ...st.hidden, [se.id]: !st.hidden[se.id] } })) }; }),
+      chartSvg, yTicks, xTicks, hover, hasHover: !!hover,
+      onChartMove: ev => { const r = ev.currentTarget.getBoundingClientRect(); const f = Math.max(0, Math.min(1, (ev.clientX - r.left) / r.width)); const k = Math.round(f * (N - 1)); if (k !== this.state.hover) this.setState({ hover: k }); },
+      onChartLeave: () => this.setState({ hover: null }),
+      heat: { cols, total: heatTotal.toLocaleString('en-US'), weeks },
+      best, worst, bestEmpty: !best.length, worstEmpty: !worst.length,
+      positions, posCount: positions.length, posNotional: this.usd(notional, false, 0)
+    };
+  }
+}
+</script>
+</body>
+</html>
