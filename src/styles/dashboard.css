@@ -67,14 +67,11 @@ html:has(.dash[data-theme="dark"]) { background: #1d1a16; color-scheme: dark; }
 .seg-scroll { max-width: 100%; overflow-x: auto; }
 .seg-lg .seg-opt { padding: 8px 16px; font-size: 14px; white-space: nowrap; }
 .seg-md .seg-opt { padding: 8px 14px; }
-.seg-sm .seg-opt { padding: 6px 10px; font-size: 12px; }
 
-/* grid layouts */
+/* grid: one column on narrow screens, the design's "Rail" layout from 980px */
 .grid { display: grid; gap: var(--space-4); align-items: stretch; grid-template-columns: minmax(0, 1fr); grid-template-areas: "kpi" "curve" "heat" "pos" "best" "worst"; }
 @media (min-width: 980px) {
-  .grid[data-layout="stacked"] { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); grid-template-areas: "kpi heat" "curve curve" "pos pos" "best worst"; }
-  .grid[data-layout="rail"] { grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); grid-template-areas: "kpi curve" "heat curve" "best pos" "worst pos"; }
-  .grid[data-layout="bento"] { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-areas: "kpi kpi heat" "curve curve best" "curve curve worst" "pos pos pos"; }
+  .grid { grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); grid-template-areas: "kpi curve" "heat curve" "best pos" "worst pos"; }
 }
 .panel { padding: var(--space-4) var(--space-6); gap: var(--space-3); min-width: 0; }
 .panel-head { display: flex; align-items: baseline; gap: var(--space-2); flex-wrap: wrap; }
@@ -116,7 +113,7 @@ html:has(.dash[data-theme="dark"]) { background: #1d1a16; color-scheme: dark; }
 .chart-headline > span:first-child { font-family: var(--font-heading); font-size: 28px; }
 .chart-headline > span:last-child { font-size: 13px; color: var(--muted); }
 .curve-panel { container-type: inline-size; }
-/* tall cards (Bento) would stretch the curve near-square and exaggerate swings: cap it at half the card's width */
+/* a tall card would stretch the curve near-square and exaggerate swings: cap it at half the card's width */
 .chart { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-2); flex: 1; min-height: 240px; max-height: max(240px, 50cqi); }
 .chart-y { display: flex; flex-direction: column; justify-content: space-between; font-size: 11px; text-align: right; color: var(--faint); padding-bottom: 22px; }
 .chart-y span { line-height: 1; }
@@ -165,5 +162,4 @@ html:has(.dash[data-theme="dark"]) { background: #1d1a16; color-scheme: dark; }
   .page { padding: var(--space-3) var(--space-4) var(--space-6); }
   .panel { padding: var(--space-4); }
   .titlebar h1 { font-size: 32px; }
-  .layout-switch { display: none; }
 }

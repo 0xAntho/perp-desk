@@ -7,7 +7,6 @@ import { PositionsTable } from './components/PositionsTable';
 import { TradeList } from './components/TradeList';
 import { EXCHANGE_COLOR, RANGE_TEXT, ago } from './format';
 
-type Layout = 'stacked' | 'rail' | 'bento';
 type Theme = 'light' | 'dark';
 
 const HEAT_WEEKS = 26;
@@ -33,7 +32,6 @@ function useNow(every = 10_000) {
 export function App() {
   const [tab, setTab] = useState<Tab>('all');
   const [range, setRange] = useState<Range>('7D');
-  const [layout, setLayout] = usePersisted<Layout>('perpdesk.layout', 'stacked');
   const prefersDark = typeof matchMedia !== 'undefined' && matchMedia('(prefers-color-scheme: dark)').matches;
   const [theme, setTheme] = usePersisted<Theme>('perpdesk.theme', prefersDark ? 'dark' : 'light');
   const now = useNow();
@@ -62,11 +60,6 @@ export function App() {
             <span className="dot" style={{ background: hlDot }} />{hlText}{hl && !hl.mock ? ` · ${hl.label}` : hl?.mock ? ' · mock' : ''}
           </span>
           <span className="updated">Updated {ago(summary.data?.updatedAt ?? null, now)}</span>
-          <div className="seg seg-sm layout-switch" title="Layout" role="radiogroup" aria-label="Layout">
-            {(['stacked', 'rail', 'bento'] as const).map(l => (
-              <label key={l} className="seg-opt"><input type="radio" name="layout" checked={layout === l} onChange={() => setLayout(l)} />{l[0].toUpperCase() + l.slice(1)}</label>
-            ))}
-          </div>
           <button className="btn btn-secondary" onClick={() => refresh.mutate()} disabled={refresh.isPending}>{refresh.isPending ? 'Refreshing…' : 'Refresh'}</button>
           <button className="btn btn-secondary btn-icon" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} title="Toggle theme" aria-label="Toggle theme">
             {theme === 'dark'
@@ -96,7 +89,7 @@ export function App() {
           </div>
         </div>
 
-        <div className="grid" data-layout={layout}>
+        <div className="grid">
           <Kpis summary={summary.data} pnl={pnl.data} isAll={isAll} range={range} onSelect={setTab} />
           <PnlChart pnl={pnl.data} isAll={isAll} range={range} />
           <ActivityHeatmap days={activity.data} weeks={HEAT_WEEKS} />

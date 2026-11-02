@@ -33,5 +33,5 @@ Personal multi-exchange perp trading dashboard (Hyperliquid, Perpl, Arcus, Exten
 ## Conventions and decisions
 - Realized PnL is gross in the curve and top-trade lists; fees and funding shown separately, net in the KPI card. The user hasn't confirmed this; ask before changing.
 - Use read-only exchange keys only. Keys live in `.env` (git-ignored); `.env.example` lists the variables.
-- Keep the UI faithful to the design file; layouts Stacked / Rail / Bento and light/dark must keep working, including at phone width.
+- Keep the UI faithful to the design file. Only the design's "Rail" layout is kept (the user removed Stacked and Bento); it and light/dark must keep working, including at phone width.
 - Code and comments in English. The user writes in French or English.
