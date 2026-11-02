@@ -14,7 +14,8 @@ interface Fill {
 }
 interface SubAccount { label: string; user: string; fills: Fill[] }
 
-const isPerp = (coin: string) => !!coin && !coin.startsWith('@') && !coin.includes('/');
+// '@n' and 'a/b' are spot pairs, '#n' are outcome tokens
+const isPerp = (coin: string) => !!coin && !coin.startsWith('@') && !coin.startsWith('#') && !coin.includes('/');
 const fillId = (f: Fill) => `${f.hash}:${f.tid}:${f.time}`;
 const sideOf = (f: Fill): Side =>
   /Short/.test(f.dir) ? 'Short' : /Long/.test(f.dir) ? 'Long' : f.side === 'B' ? 'Long' : 'Short';
@@ -27,6 +28,8 @@ export class HyperliquidAdapter implements Adapter {
   private readonly main: string;
   private accounts: SubAccount[] | null = null;
   private accountsAt = 0;
+  private dexs: string[] | null = null;
+  private dexsAt = 0;
 
   constructor(address: string, private readonly fetchImpl: Fetch = fetch) {
     const a = address.trim().toLowerCase();
@@ -78,28 +81,64 @@ export class HyperliquidAdapter implements Adapter {
     return this.accounts;
   }
 
+  /** Perp dexes: '' is the main one, the others are HIP-3 builder dexes ('xyz', …). */
+  private async getDexs(): Promise<string[]> {
+    if (this.dexs && Date.now() - this.dexsAt < SUBS_TTL) return this.dexs;
+    const list: Json[] | undefined = await this.post({ type: 'perpDexs' }).catch(() => undefined);
+    if (list === undefined) return this.dexs ?? [''];
+    this.dexs = list.map(d => d?.name ?? '');   // the main dex is listed as null
+    this.dexsAt = Date.now();
+    return this.dexs;
+  }
+
+  /** clearinghouseState of every (sub-account, dex) pair: each HIP-3 dex keeps its own margin and positions. */
+  private async clearinghouses(): Promise<{ account: SubAccount; state: Json }[]> {
+    const [accounts, dexs] = await Promise.all([this.getAccounts(), this.getDexs()]);
+    const pairs = accounts.flatMap(account => dexs.map(dex => ({ account, dex })));
+    const states = await Promise.all(pairs.map(({ account, dex }) =>
+      this.post({ type: 'clearinghouseState', user: account.user, ...(dex && { dex }) })));
+    return pairs.map(({ account }, i) => ({ account, state: states[i] }));
+  }
+
   private get multi() { return (this.accounts?.length ?? 1) > 1; }
 
-  async getAccount(): Promise<Account> {
+  /** Unified accounts keep perp collateral in spot USDC: user → USDC balance, for those accounts only. */
+  private async unifiedCollateral(): Promise<Map<string, { total: number; hold: number }>> {
     const accounts = await this.getAccounts();
-    const states = await Promise.all(accounts.map(a => this.post({ type: 'clearinghouseState', user: a.user })));
+    const out = new Map<string, { total: number; hold: number }>();
+    await Promise.all(accounts.map(async a => {
+      if (await this.post({ type: 'userAbstraction', user: a.user }) !== 'unifiedAccount') return;
+      const spot = await this.post({ type: 'spotClearinghouseState', user: a.user });
+      const usdc = spot?.balances?.find((b: Json) => b.coin === 'USDC');
+      out.set(a.user, { total: +(usdc?.total ?? 0), hold: +(usdc?.hold ?? 0) });
+    }));
+    return out;
+  }
+
+  async getAccount(): Promise<Account> {
+    const [states, unified] = await Promise.all([this.clearinghouses(), this.unifiedCollateral()]);
     let equity = 0, free = 0;
-    for (const s of states) {
-      equity += +(s?.marginSummary?.accountValue ?? 0);
-      free += +(s?.withdrawable ?? 0);
+    for (const { account, state: s } of states) {
+      if (unified.has(account.user)) {
+        // perp states of a unified account report no collateral, only their positions' unrealized PnL
+        for (const { position: p } of s?.assetPositions ?? []) equity += +(p.unrealizedPnl ?? 0);
+      } else {
+        equity += +(s?.marginSummary?.accountValue ?? 0);
+        free += +(s?.withdrawable ?? 0);
+      }
+    }
+    for (const usdc of unified.values()) {
+      equity += usdc.total;
+      free += usdc.total - usdc.hold;
     }
     return { exchange: this.id, equity, freeCollateral: free, ts: Date.now() };
   }
 
   async getPositions(): Promise<Position[]> {
-    const accounts = await this.getAccounts();
-    const [mids, ...states] = await Promise.all([
-      this.post({ type: 'allMids' }),
-      ...accounts.map(a => this.post({ type: 'clearinghouseState', user: a.user })),
-    ]);
+    const [mids, states] = await Promise.all([this.post({ type: 'allMids' }), this.clearinghouses()]);
     const out: Position[] = [];
-    accounts.forEach((a, i) => {
-      for (const { position: p } of states[i]?.assetPositions ?? []) {
+    for (const { account: a, state } of states) {
+      for (const { position: p } of state?.assetPositions ?? []) {
         const szi = +p.szi;
         if (!szi) continue;
         const size = Math.abs(szi), entry = +p.entryPx, dir = szi > 0 ? 1 : -1;
@@ -120,7 +159,7 @@ export class HyperliquidAdapter implements Adapter {
           openedAt: openedAt(a.fills, p.coin),
         });
       }
-    });
+    }
     return out;
   }
 

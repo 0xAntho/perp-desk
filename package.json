@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently -k -n api,web -c auto \"npm:dev:api\" \"npm:dev:web\"",
-    "dev:api": "tsx watch server/index.ts",
+    "dev:api": "node --watch --import tsx server/index.ts",
     "dev:web": "vite",
     "build": "tsc -p tsconfig.json --noEmit && tsc -p server/tsconfig.json --noEmit && vite build",
     "start": "NODE_ENV=production tsx server/index.ts",

@@ -1,0 +1,305 @@
+- generic [ref=f3e4]:
+  - banner [ref=f3e5]:
+    - generic [ref=f3e6]: Perp desk
+    - generic "Connecting…" [ref=f3e9]
+    - generic [ref=f3e11]: Updated —
+    - radiogroup "Layout" [ref=f3e12]:
+      - generic [ref=f3e13] [cursor=pointer]:
+        - radio "Stacked"
+        - text: Stacked
+      - generic [ref=f3e14] [cursor=pointer]:
+        - radio "Rail"
+        - text: Rail
+      - generic [ref=f3e15] [cursor=pointer]:
+        - radio "Bento" [checked]
+        - text: Bento
+    - button "Refresh" [ref=f3e16] [cursor=pointer]
+    - button "Toggle theme" [ref=f3e17] [cursor=pointer]
+  - generic [ref=f3e21]:
+    - generic [ref=f3e22]:
+      - heading "All exchanges" [level=1] [ref=f3e23]
+      - radiogroup "Exchange" [ref=f3e25]:
+        - generic [ref=f3e26] [cursor=pointer]:
+          - radio "All" [checked]
+          - text: All
+        - generic [ref=f3e28] [cursor=pointer]:
+          - radio "Hyperliquid"
+          - text: Hyperliquid
+        - generic [ref=f3e30] [cursor=pointer]:
+          - radio "Perpl"
+          - text: Perpl
+        - generic [ref=f3e32] [cursor=pointer]:
+          - radio "Arcus"
+          - text: Arcus
+        - generic [ref=f3e34] [cursor=pointer]:
+          - radio "Extended"
+          - text: Extended
+    - radiogroup "Range" [ref=f3e36]:
+      - generic [ref=f3e37] [cursor=pointer]:
+        - radio "24h"
+        - text: 24h
+      - generic [ref=f3e38] [cursor=pointer]:
+        - radio "7D" [checked]
+        - text: 7D
+      - generic [ref=f3e39] [cursor=pointer]:
+        - radio "30D"
+        - text: 30D
+      - generic [ref=f3e40] [cursor=pointer]:
+        - radio "All"
+        - text: All
+  - generic [ref=f3e41]:
+    - generic [ref=f3e43]:
+      - generic [ref=f3e44]: Balance
+      - generic [ref=f3e48]: Unrealized PnL
+      - generic [ref=f3e52]: Realized PnL · 7D
+    - generic [ref=f3e58]:
+      - heading "PnL curve" [level=4] [ref=f3e60]
+      - generic [ref=f3e61]: realized over the last 7 days
+    - generic [ref=f3e70]:
+      - generic [ref=f3e71]:
+        - heading "Activity" [level=4] [ref=f3e72]
+        - generic [ref=f3e73]: … · last 26 weeks
+      - generic [ref=f3e74]:
+        - generic [ref=f3e75]:
+          - generic [ref=f3e76]: May
+          - generic [ref=f3e79]: Jun
+          - generic [ref=f3e84]: Jul
+          - generic [ref=f3e88]: Aug
+          - generic [ref=f3e93]: Sep
+          - generic [ref=f3e97]: Oct
+          - generic [ref=f3e101]: Nov
+        - generic [ref=f3e102]:
+          - generic [ref=f3e103]:
+            - generic "0 trades · Mon, May 11" [ref=f3e104]
+            - generic "0 trades · Tue, May 12" [ref=f3e105]
+            - generic "0 trades · Wed, May 13" [ref=f3e106]
+            - generic "0 trades · Thu, May 14" [ref=f3e107]
+            - generic "0 trades · Fri, May 15" [ref=f3e108]
+            - generic "0 trades · Sat, May 16" [ref=f3e109]
+            - generic "0 trades · Sun, May 17" [ref=f3e110]
+          - generic [ref=f3e111]:
+            - generic "0 trades · Mon, May 18" [ref=f3e112]
+            - generic "0 trades · Tue, May 19" [ref=f3e113]
+            - generic "0 trades · Wed, May 20" [ref=f3e114]
+            - generic "0 trades · Thu, May 21" [ref=f3e115]
+            - generic "0 trades · Fri, May 22" [ref=f3e116]
+            - generic "0 trades · Sat, May 23" [ref=f3e117]
+            - generic "0 trades · Sun, May 24" [ref=f3e118]
+          - generic [ref=f3e119]:
+            - generic "0 trades · Mon, May 25" [ref=f3e120]
+            - generic "0 trades · Tue, May 26" [ref=f3e121]
+            - generic "0 trades · Wed, May 27" [ref=f3e122]
+            - generic "0 trades · Thu, May 28" [ref=f3e123]
+            - generic "0 trades · Fri, May 29" [ref=f3e124]
+            - generic "0 trades · Sat, May 30" [ref=f3e125]
+            - generic "0 trades · Sun, May 31" [ref=f3e126]
+          - generic [ref=f3e127]:
+            - generic "0 trades · Mon, Jun 1" [ref=f3e128]
+            - generic "0 trades · Tue, Jun 2" [ref=f3e129]
+            - generic "0 trades · Wed, Jun 3" [ref=f3e130]
+            - generic "0 trades · Thu, Jun 4" [ref=f3e131]
+            - generic "0 trades · Fri, Jun 5" [ref=f3e132]
+            - generic "0 trades · Sat, Jun 6" [ref=f3e133]
+            - generic "0 trades · Sun, Jun 7" [ref=f3e134]
+          - generic [ref=f3e135]:
+            - generic "0 trades · Mon, Jun 8" [ref=f3e136]
+            - generic "0 trades · Tue, Jun 9" [ref=f3e137]
+            - generic "0 trades · Wed, Jun 10" [ref=f3e138]
+            - generic "0 trades · Thu, Jun 11" [ref=f3e139]
+            - generic "0 trades · Fri, Jun 12" [ref=f3e140]
+            - generic "0 trades · Sat, Jun 13" [ref=f3e141]
+            - generic "0 trades · Sun, Jun 14" [ref=f3e142]
+          - generic [ref=f3e143]:
+            - generic "0 trades · Mon, Jun 15" [ref=f3e144]
+            - generic "0 trades · Tue, Jun 16" [ref=f3e145]
+            - generic "0 trades · Wed, Jun 17" [ref=f3e146]
+            - generic "0 trades · Thu, Jun 18" [ref=f3e147]
+            - generic "0 trades · Fri, Jun 19" [ref=f3e148]
+            - generic "0 trades · Sat, Jun 20" [ref=f3e149]
+            - generic "0 trades · Sun, Jun 21" [ref=f3e150]
+          - generic [ref=f3e151]:
+            - generic "0 trades · Mon, Jun 22" [ref=f3e152]
+            - generic "0 trades · Tue, Jun 23" [ref=f3e153]
+            - generic "0 trades · Wed, Jun 24" [ref=f3e154]
+            - generic "0 trades · Thu, Jun 25" [ref=f3e155]
+            - generic "0 trades · Fri, Jun 26" [ref=f3e156]
+            - generic "0 trades · Sat, Jun 27" [ref=f3e157]
+            - generic "0 trades · Sun, Jun 28" [ref=f3e158]
+          - generic [ref=f3e159]:
+            - generic "0 trades · Mon, Jun 29" [ref=f3e160]
+            - generic "0 trades · Tue, Jun 30" [ref=f3e161]
+            - generic "0 trades · Wed, Jul 1" [ref=f3e162]
+            - generic "0 trades · Thu, Jul 2" [ref=f3e163]
+            - generic "0 trades · Fri, Jul 3" [ref=f3e164]
+            - generic "0 trades · Sat, Jul 4" [ref=f3e165]
+            - generic "0 trades · Sun, Jul 5" [ref=f3e166]
+          - generic [ref=f3e167]:
+            - generic "0 trades · Mon, Jul 6" [ref=f3e168]
+            - generic "0 trades · Tue, Jul 7" [ref=f3e169]
+            - generic "0 trades · Wed, Jul 8" [ref=f3e170]
+            - generic "0 trades · Thu, Jul 9" [ref=f3e171]
+            - generic "0 trades · Fri, Jul 10" [ref=f3e172]
+            - generic "0 trades · Sat, Jul 11" [ref=f3e173]
+            - generic "0 trades · Sun, Jul 12" [ref=f3e174]
+          - generic [ref=f3e175]:
+            - generic "0 trades · Mon, Jul 13" [ref=f3e176]
+            - generic "0 trades · Tue, Jul 14" [ref=f3e177]
+            - generic "0 trades · Wed, Jul 15" [ref=f3e178]
+            - generic "0 trades · Thu, Jul 16" [ref=f3e179]
+            - generic "0 trades · Fri, Jul 17" [ref=f3e180]
+            - generic "0 trades · Sat, Jul 18" [ref=f3e181]
+            - generic "0 trades · Sun, Jul 19" [ref=f3e182]
+          - generic [ref=f3e183]:
+            - generic "0 trades · Mon, Jul 20" [ref=f3e184]
+            - generic "0 trades · Tue, Jul 21" [ref=f3e185]
+            - generic "0 trades · Wed, Jul 22" [ref=f3e186]
+            - generic "0 trades · Thu, Jul 23" [ref=f3e187]
+            - generic "0 trades · Fri, Jul 24" [ref=f3e188]
+            - generic "0 trades · Sat, Jul 25" [ref=f3e189]
+            - generic "0 trades · Sun, Jul 26" [ref=f3e190]
+          - generic [ref=f3e191]:
+            - generic "0 trades · Mon, Jul 27" [ref=f3e192]
+            - generic "0 trades · Tue, Jul 28" [ref=f3e193]
+            - generic "0 trades · Wed, Jul 29" [ref=f3e194]
+            - generic "0 trades · Thu, Jul 30" [ref=f3e195]
+            - generic "0 trades · Fri, Jul 31" [ref=f3e196]
+            - generic "0 trades · Sat, Aug 1" [ref=f3e197]
+            - generic "0 trades · Sun, Aug 2" [ref=f3e198]
+          - generic [ref=f3e199]:
+            - generic "0 trades · Mon, Aug 3" [ref=f3e200]
+            - generic "0 trades · Tue, Aug 4" [ref=f3e201]
+            - generic "0 trades · Wed, Aug 5" [ref=f3e202]
+            - generic "0 trades · Thu, Aug 6" [ref=f3e203]
+            - generic "0 trades · Fri, Aug 7" [ref=f3e204]
+            - generic "0 trades · Sat, Aug 8" [ref=f3e205]
+            - generic "0 trades · Sun, Aug 9" [ref=f3e206]
+          - generic [ref=f3e207]:
+            - generic "0 trades · Mon, Aug 10" [ref=f3e208]
+            - generic "0 trades · Tue, Aug 11" [ref=f3e209]
+            - generic "0 trades · Wed, Aug 12" [ref=f3e210]
+            - generic "0 trades · Thu, Aug 13" [ref=f3e211]
+            - generic "0 trades · Fri, Aug 14" [ref=f3e212]
+            - generic "0 trades · Sat, Aug 15" [ref=f3e213]
+            - generic "0 trades · Sun, Aug 16" [ref=f3e214]
+          - generic [ref=f3e215]:
+            - generic "0 trades · Mon, Aug 17" [ref=f3e216]
+            - generic "0 trades · Tue, Aug 18" [ref=f3e217]
+            - generic "0 trades · Wed, Aug 19" [ref=f3e218]
+            - generic "0 trades · Thu, Aug 20" [ref=f3e219]
+            - generic "0 trades · Fri, Aug 21" [ref=f3e220]
+            - generic "0 trades · Sat, Aug 22" [ref=f3e221]
+            - generic "0 trades · Sun, Aug 23" [ref=f3e222]
+          - generic [ref=f3e223]:
+            - generic "0 trades · Mon, Aug 24" [ref=f3e224]
+            - generic "0 trades · Tue, Aug 25" [ref=f3e225]
+            - generic "0 trades · Wed, Aug 26" [ref=f3e226]
+            - generic "0 trades · Thu, Aug 27" [ref=f3e227]
+            - generic "0 trades · Fri, Aug 28" [ref=f3e228]
+            - generic "0 trades · Sat, Aug 29" [ref=f3e229]
+            - generic "0 trades · Sun, Aug 30" [ref=f3e230]
+          - generic [ref=f3e231]:
+            - generic "0 trades · Mon, Aug 31" [ref=f3e232]
+            - generic "0 trades · Tue, Sep 1" [ref=f3e233]
+            - generic "0 trades · Wed, Sep 2" [ref=f3e234]
+            - generic "0 trades · Thu, Sep 3" [ref=f3e235]
+            - generic "0 trades · Fri, Sep 4" [ref=f3e236]
+            - generic "0 trades · Sat, Sep 5" [ref=f3e237]
+            - generic "0 trades · Sun, Sep 6" [ref=f3e238]
+          - generic [ref=f3e239]:
+            - generic "0 trades · Mon, Sep 7" [ref=f3e240]
+            - generic "0 trades · Tue, Sep 8" [ref=f3e241]
+            - generic "0 trades · Wed, Sep 9" [ref=f3e242]
+            - generic "0 trades · Thu, Sep 10" [ref=f3e243]
+            - generic "0 trades · Fri, Sep 11" [ref=f3e244]
+            - generic "0 trades · Sat, Sep 12" [ref=f3e245]
+            - generic "0 trades · Sun, Sep 13" [ref=f3e246]
+          - generic [ref=f3e247]:
+            - generic "0 trades · Mon, Sep 14" [ref=f3e248]
+            - generic "0 trades · Tue, Sep 15" [ref=f3e249]
+            - generic "0 trades · Wed, Sep 16" [ref=f3e250]
+            - generic "0 trades · Thu, Sep 17" [ref=f3e251]
+            - generic "0 trades · Fri, Sep 18" [ref=f3e252]
+            - generic "0 trades · Sat, Sep 19" [ref=f3e253]
+            - generic "0 trades · Sun, Sep 20" [ref=f3e254]
+          - generic [ref=f3e255]:
+            - generic "0 trades · Mon, Sep 21" [ref=f3e256]
+            - generic "0 trades · Tue, Sep 22" [ref=f3e257]
+            - generic "0 trades · Wed, Sep 23" [ref=f3e258]
+            - generic "0 trades · Thu, Sep 24" [ref=f3e259]
+            - generic "0 trades · Fri, Sep 25" [ref=f3e260]
+            - generic "0 trades · Sat, Sep 26" [ref=f3e261]
+            - generic "0 trades · Sun, Sep 27" [ref=f3e262]
+          - generic [ref=f3e263]:
+            - generic "0 trades · Mon, Sep 28" [ref=f3e264]
+            - generic "0 trades · Tue, Sep 29" [ref=f3e265]
+            - generic "0 trades · Wed, Sep 30" [ref=f3e266]
+            - generic "0 trades · Thu, Oct 1" [ref=f3e267]
+            - generic "0 trades · Fri, Oct 2" [ref=f3e268]
+            - generic "0 trades · Sat, Oct 3" [ref=f3e269]
+            - generic "0 trades · Sun, Oct 4" [ref=f3e270]
+          - generic [ref=f3e271]:
+            - generic "0 trades · Mon, Oct 5" [ref=f3e272]
+            - generic "0 trades · Tue, Oct 6" [ref=f3e273]
+            - generic "0 trades · Wed, Oct 7" [ref=f3e274]
+            - generic "0 trades · Thu, Oct 8" [ref=f3e275]
+            - generic "0 trades · Fri, Oct 9" [ref=f3e276]
+            - generic "0 trades · Sat, Oct 10" [ref=f3e277]
+            - generic "0 trades · Sun, Oct 11" [ref=f3e278]
+          - generic [ref=f3e279]:
+            - generic "0 trades · Mon, Oct 12" [ref=f3e280]
+            - generic "0 trades · Tue, Oct 13" [ref=f3e281]
+            - generic "0 trades · Wed, Oct 14" [ref=f3e282]
+            - generic "0 trades · Thu, Oct 15" [ref=f3e283]
+            - generic "0 trades · Fri, Oct 16" [ref=f3e284]
+            - generic "0 trades · Sat, Oct 17" [ref=f3e285]
+            - generic "0 trades · Sun, Oct 18" [ref=f3e286]
+          - generic [ref=f3e287]:
+            - generic "0 trades · Mon, Oct 19" [ref=f3e288]
+            - generic "0 trades · Tue, Oct 20" [ref=f3e289]
+            - generic "0 trades · Wed, Oct 21" [ref=f3e290]
+            - generic "0 trades · Thu, Oct 22" [ref=f3e291]
+            - generic "0 trades · Fri, Oct 23" [ref=f3e292]
+            - generic "0 trades · Sat, Oct 24" [ref=f3e293]
+            - generic "0 trades · Sun, Oct 25" [ref=f3e294]
+          - generic [ref=f3e295]:
+            - generic "0 trades · Mon, Oct 26" [ref=f3e296]
+            - generic "0 trades · Tue, Oct 27" [ref=f3e297]
+            - generic "0 trades · Wed, Oct 28" [ref=f3e298]
+            - generic "0 trades · Thu, Oct 29" [ref=f3e299]
+            - generic "0 trades · Fri, Oct 30" [ref=f3e300]
+            - generic "0 trades · Sat, Oct 31" [ref=f3e301]
+            - generic "0 trades · Sun, Nov 1" [ref=f3e302]
+          - generic "0 trades · Mon, Nov 2" [ref=f3e304]
+      - generic [ref=f3e311]:
+        - generic [ref=f3e312]: Less
+        - generic [ref=f3e318]: More
+    - generic [ref=f3e320]:
+      - heading "Best trades" [level=4] [ref=f3e321]
+      - generic [ref=f3e322]: Top 5 · 7D
+    - generic [ref=f3e336]:
+      - heading "Worst trades" [level=4] [ref=f3e337]
+      - generic [ref=f3e338]: Bottom 5 · 7D
+    - generic [ref=f3e351]:
+      - generic [ref=f3e352]:
+        - heading "Open positions" [level=4] [ref=f3e353]
+        - generic [ref=f3e354]: …
+        - generic [ref=f3e355]: $0 notional
+      - table [ref=f3e357]:
+        - rowgroup [ref=f3e358]:
+          - row [ref=f3e359]:
+            - columnheader "Exchange" [ref=f3e360]
+            - columnheader "Symbol" [ref=f3e361]
+            - columnheader "Side" [ref=f3e362]
+            - columnheader "Size" [ref=f3e363]
+            - columnheader "Entry" [ref=f3e364]
+            - columnheader "Mark" [ref=f3e365]
+            - columnheader "Liq." [ref=f3e366]
+            - columnheader "Lev." [ref=f3e367]
+            - columnheader "Margin" [ref=f3e368]
+            - columnheader "Unrealized PnL" [ref=f3e369]
+            - columnheader "ROE" [ref=f3e370]
+            - columnheader "Funding" [ref=f3e371]
+            - columnheader "Opened" [ref=f3e372]
+        - rowgroup [ref=f3e373]:
+          - row [ref=f3e374]:
+            - cell [ref=f3e375]
