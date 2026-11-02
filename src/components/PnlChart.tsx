@@ -39,7 +39,7 @@ export function PnlChart({ pnl, isAll, range }: { pnl?: Pnl; isAll: boolean; ran
   const headline = pnl?.flows.gross ?? 0;
 
   return (
-    <section className="card elev-sm panel" style={{ gridArea: 'curve' }}>
+    <section className="card elev-sm panel curve-panel" style={{ gridArea: 'curve' }}>
       <div className="panel-head" style={{ alignItems: 'center' }}>
         <h4 className="grow">PnL curve</h4>
         {isAll && (

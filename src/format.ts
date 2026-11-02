@@ -32,6 +32,12 @@ export function qty(v: number) {
   return v.toLocaleString('en-US', { maximumFractionDigits: d });
 }
 
+/** Hyperliquid HIP-3 markets come as 'dex:COIN' (e.g. 'xyz:NVDA'). */
+export function market(symbol: string) {
+  const i = symbol.indexOf(':');
+  return i < 0 ? { coin: symbol, dex: null } : { coin: symbol.slice(i + 1), dex: symbol.slice(0, i) };
+}
+
 export function date(t: number, withTime = false) {
   return new Date(t).toLocaleString('en-US', withTime
     ? { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }

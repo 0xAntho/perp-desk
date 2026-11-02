@@ -63,7 +63,9 @@ export class MockAdapter implements Adapter {
     }
     const np = 2 + Math.floor(rng() * 3);
     for (let i = 0; i < np; i++) {
-      const sym = SYMS[Math.floor(rng() * SYMS.length)];
+      // one position per symbol, like a real one-way perp account
+      let sym: string;
+      do sym = SYMS[Math.floor(rng() * SYMS.length)]; while (this.positions.some(p => p.sym === sym));
       const dir = rng() < 0.6 ? 1 : -1;
       const entry = PRICES[sym] * (1 + gauss() * 0.04);
       const lev = [3, 5, 5, 10, 10, 15, 20][Math.floor(rng() * 7)];

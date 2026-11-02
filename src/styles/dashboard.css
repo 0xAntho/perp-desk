@@ -115,7 +115,9 @@ html:has(.dash[data-theme="dark"]) { background: #1d1a16; color-scheme: dark; }
 .chart-headline { display: flex; align-items: baseline; gap: var(--space-2); flex-wrap: wrap; }
 .chart-headline > span:first-child { font-family: var(--font-heading); font-size: 28px; }
 .chart-headline > span:last-child { font-size: 13px; color: var(--muted); }
-.chart { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-2); flex: 1; min-height: 240px; }
+.curve-panel { container-type: inline-size; }
+/* tall cards (Bento) would stretch the curve near-square and exaggerate swings: cap it at half the card's width */
+.chart { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-2); flex: 1; min-height: 240px; max-height: max(240px, 50cqi); }
 .chart-y { display: flex; flex-direction: column; justify-content: space-between; font-size: 11px; text-align: right; color: var(--faint); padding-bottom: 22px; }
 .chart-y span { line-height: 1; }
 .chart-main { display: flex; flex-direction: column; gap: 6px; min-width: 0; }

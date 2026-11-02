@@ -11,7 +11,8 @@ export function ActivityHeatmap({ days, weeks }: { days?: ActivityDay[]; weeks: 
     // weeks run Monday → Sunday; the last column holds the current week
     const end = new Date(today); end.setDate(today.getDate() + (6 - ((today.getDay() + 6) % 7)));
     const start = new Date(end); start.setDate(end.getDate() - weeks * 7 + 1);
-    let max = 1, total = 0, lastMonth = -1;
+    let total = 0, lastMonth = -1;
+    const active: number[] = [];
     const cols = [];
     for (let w = 0; w < weeks; w++) {
       const cells = [];
@@ -20,7 +21,7 @@ export function ActivityHeatmap({ days, weeks }: { days?: ActivityDay[]; weeks: 
         const dt = new Date(start); dt.setDate(start.getDate() + w * 7 + d);
         const future = dt > today;
         const c = future ? 0 : counts.get(keyOf(dt)) ?? 0;
-        if (!future) { max = Math.max(max, c); total += c; }
+        if (!future) { total += c; if (c > 0) active.push(c); }
         if (d === 0 && dt.getMonth() !== lastMonth) {
           month = w === 0 && dt.getDate() > 14 ? '' : dt.toLocaleString('en-US', { month: 'short' });
           lastMonth = dt.getMonth();
@@ -29,7 +30,11 @@ export function ActivityHeatmap({ days, weeks }: { days?: ActivityDay[]; weeks: 
       }
       cols.push({ month, cells });
     }
-    const bg = (c: number, future: boolean) => future ? 'transparent' : `var(--heat${c === 0 ? 0 : Math.min(4, Math.ceil((c / max) * 4))})`;
+    // levels by quartile of active days, so a few huge days don't wash out the rest
+    active.sort((a, b) => a - b);
+    const q = [0.25, 0.5, 0.75].map(p => active[Math.floor(p * (active.length - 1))] ?? 0);
+    const level = (c: number) => c === 0 ? 0 : 1 + q.filter(t => c > t).length;
+    const bg = (c: number, future: boolean) => future ? 'transparent' : `var(--heat${level(c)})`;
     return { cols: cols.map(col => ({ ...col, cells: col.cells.map(x => ({ ...x, bg: bg(x.c, x.future) })) })), total };
   }, [days, weeks]);
 
