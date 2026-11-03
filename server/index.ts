@@ -54,7 +54,8 @@ if (HOST !== '127.0.0.1' && HOST !== 'localhost' && !auth) {
 const app = createApp(sync, { auth });
 
 // In production the API also serves the built dashboard.
-if (env.NODE_ENV === 'production' && existsSync('dist/index.html')) {
+// `--production` because `NODE_ENV=production cmd` is not valid in Windows shells
+if ((env.NODE_ENV === 'production' || process.argv.includes('--production')) && existsSync('dist/index.html')) {
   app.use('/*', serveStatic({ root: './dist' }));
   app.get('*', serveStatic({ path: './dist/index.html' }));
 }

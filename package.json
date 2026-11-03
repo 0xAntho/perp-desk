@@ -8,8 +8,8 @@
     "dev:api": "node --watch --import tsx server/index.ts",
     "dev:web": "vite",
     "build": "tsc -p tsconfig.json --noEmit && tsc -p server/tsconfig.json --noEmit && vite build",
-    "start": "NODE_ENV=production tsx server/index.ts",
-    "test": "tsx --test server/**/*.test.ts",
+    "start": "tsx server/index.ts --production",
+    "test": "node server/run-tests.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p server/tsconfig.json --noEmit"
   },
   "dependencies": {

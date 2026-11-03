@@ -8,7 +8,8 @@ export const EXCHANGE_COLOR: Record<ExchangeId | 'total', string> = {
   extended: 'var(--ex-extended)',
 };
 
-export const tone = (v: number) => (v >= 0 ? 'pos' : 'neg');
+/** Profit/loss colour class; exactly 0 stays neutral. */
+export const tone = (v: number) => (v > 0 ? 'pos' : v < 0 ? 'neg' : '');
 
 export function usd(v: number, sign = false, dec = 2) {
   const s = Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec });
