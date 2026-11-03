@@ -1,6 +1,7 @@
 import { serve } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { existsSync } from 'node:fs';
+import { ArcusAdapter } from './adapters/arcus.js';
 import { ExtendedAdapter } from './adapters/extended.js';
 import { HyperliquidAdapter } from './adapters/hyperliquid.js';
 import { MockAdapter } from './adapters/mock.js';
@@ -29,7 +30,13 @@ if (env.PERPL_API_KEY && env.PERPL_API_KEY_SECRET) {
   console.warn('PERPL_API_KEY / PERPL_API_KEY_SECRET not set: Perpl runs on mock data. Add them to .env.');
   adapters.push(new MockAdapter('perpl', 'Perpl', 21540, 4, 23));
 }
-adapters.push(new MockAdapter('arcus', 'Arcus', 15890, 3, 37, { noLiq: true }));
+const arcusAddress = env.ARCUS_ADDRESS || env.HL_ADDRESS;   // public by address, usually the same wallet
+if (arcusAddress) {
+  adapters.push(new ArcusAdapter(arcusAddress));
+} else {
+  console.warn('ARCUS_ADDRESS (or HL_ADDRESS) not set: Arcus runs on mock data. Add it to .env.');
+  adapters.push(new MockAdapter('arcus', 'Arcus', 15890, 3, 37, { noLiq: true }));
+}
 if (env.EXTENDED_API_KEY) {
   adapters.push(new ExtendedAdapter(env.EXTENDED_API_KEY.split(',')));
 } else {
