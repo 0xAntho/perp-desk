@@ -1,8 +1,10 @@
 import { serve } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { existsSync } from 'node:fs';
+import { ExtendedAdapter } from './adapters/extended.js';
 import { HyperliquidAdapter } from './adapters/hyperliquid.js';
 import { MockAdapter } from './adapters/mock.js';
+import { PerplAdapter } from './adapters/perpl.js';
 import { createApp } from './app.js';
 import { Sync } from './sync.js';
 import type { Adapter } from './types.js';
@@ -21,11 +23,19 @@ if (env.HL_ADDRESS) {
   adapters.push(new MockAdapter('hyperliquid', 'Hyperliquid', 48210, 7, 11, { symbols: 8 }));
 }
 // Not wired up yet — swap each for a real adapter (Plan §3, §8).
-adapters.push(
-  new MockAdapter('perpl', 'Perpl', 21540, 4, 23),
-  new MockAdapter('arcus', 'Arcus', 15890, 3, 37, { noLiq: true }),
-  new MockAdapter('extended', 'Extended', 9320, 2.5, 51),
-);
+if (env.PERPL_API_KEY && env.PERPL_API_KEY_SECRET) {
+  adapters.push(new PerplAdapter(env.PERPL_API_KEY, env.PERPL_API_KEY_SECRET, 'read-only key'));
+} else {
+  console.warn('PERPL_API_KEY / PERPL_API_KEY_SECRET not set: Perpl runs on mock data. Add them to .env.');
+  adapters.push(new MockAdapter('perpl', 'Perpl', 21540, 4, 23));
+}
+adapters.push(new MockAdapter('arcus', 'Arcus', 15890, 3, 37, { noLiq: true }));
+if (env.EXTENDED_API_KEY) {
+  adapters.push(new ExtendedAdapter(env.EXTENDED_API_KEY.split(',')));
+} else {
+  console.warn('EXTENDED_API_KEY not set: Extended runs on mock data. Add it to .env.');
+  adapters.push(new MockAdapter('extended', 'Extended', 9320, 2.5, 51));
+}
 
 const sync = new Sync(adapters);
 sync.start();

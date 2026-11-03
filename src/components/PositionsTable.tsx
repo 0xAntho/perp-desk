@@ -68,7 +68,7 @@ export function PositionsTable({ positions, isAll, names }: { positions?: Positi
             {positions?.map(p => {
               const row = cells(p);
               return (
-                <tr key={`${p.exchange}:${p.sub}:${p.symbol}`}>
+                <tr key={`${p.exchange}:${p.sub}:${p.symbol}:${p.side}`}>
                   {isAll && <td><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }} className="nowrap"><span className="dot" style={{ background: EXCHANGE_COLOR[p.exchange] }} />{names[p.exchange]}{p.sub ? ' · ' + p.sub : ''}</span></td>}
                   {order.map(c => row[c])}
                 </tr>
