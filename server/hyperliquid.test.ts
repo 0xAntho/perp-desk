@@ -4,7 +4,7 @@ import { HyperliquidAdapter } from './adapters/hyperliquid.js';
 import { Sync } from './sync.js';
 import * as agg from './aggregate.js';
 
-const MAIN = '0x567338a1bdb6d7ce2aacca25b69fc1a5c82708ca';
+const MAIN = '0x2222222222222222222222222222222222222222';
 const SUB = '0x1111111111111111111111111111111111111111';
 const now = Date.now();
 const H = 3600e3;

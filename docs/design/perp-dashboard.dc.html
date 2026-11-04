@@ -249,7 +249,7 @@ a{color:var(--color-accent)}a:hover{color:var(--color-accent-600)}
   </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;hlAddress&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;0x567338a1bDB6D7cE2AacCa25b69fc1a5c82708cA&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;layout&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;stacked&quot;,&quot;rail&quot;,&quot;bento&quot;],&quot;default&quot;:&quot;stacked&quot;,&quot;tsType&quot;:&quot;'stacked'|'rail'|'bento'&quot;},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;'light'|'dark'&quot;},&quot;heatWeeks&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;min&quot;:8,&quot;max&quot;:52,&quot;step&quot;:1,&quot;default&quot;:26,&quot;tsType&quot;:&quot;number&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;hlAddress&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;0x0000000000000000000000000000000000000000&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;layout&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;stacked&quot;,&quot;rail&quot;,&quot;bento&quot;],&quot;default&quot;:&quot;stacked&quot;,&quot;tsType&quot;:&quot;'stacked'|'rail'|'bento'&quot;},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;'light'|'dark'&quot;},&quot;heatWeeks&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;min&quot;:8,&quot;max&quot;:52,&quot;step&quot;:1,&quot;default&quot;:26,&quot;tsType&quot;:&quot;number&quot;}}">
 class Component extends DCLogic {
   state = { tab: 'all', range: '7D', layout: null, theme: null, hidden: {}, hover: null, narrow: false, updated: Date.now() };
 
@@ -264,7 +264,7 @@ class Component extends DCLogic {
 
   hlAddress() {
     const q = new URLSearchParams(location.search).get('address');
-    return q || this.props.hlAddress || '0x567338a1bDB6D7cE2AacCa25b69fc1a5c82708cA';
+    return q || this.props.hlAddress || '0x0000000000000000000000000000000000000000';
   }
   async startHL() {
     this.hlClose && this.hlClose(); clearInterval(this.stateTimer);
