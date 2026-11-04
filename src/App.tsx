@@ -44,22 +44,16 @@ export function App() {
   const refresh = useRefresh();
 
   const isAll = tab === 'all';
-  const hl = summary.data?.exchanges.find(e => e.id === 'hyperliquid');
   const apiDown = summary.isError && !summary.data;
-  const hlText = apiDown ? 'Backend unreachable'
-    : !hl ? 'Connecting…'
-    : { loading: 'Hyperliquid loading…', live: 'Hyperliquid live', stale: 'Hyperliquid stale', error: 'Hyperliquid error: ' + (hl.error ?? '') }[hl.status];
-  const hlDot = apiDown || hl?.status === 'error' ? 'var(--neg)' : hl?.status === 'live' ? 'var(--pos)' : 'var(--color-neutral-400)';
 
   return (
     <div className="dash" data-theme={theme}>
       <div className="page">
         <header className="topbar">
           <div className="brand"><div className="brand-mark" aria-hidden /><span className="brand-name">Perp desk</span></div>
-          <span className="pill" title={hl?.error ?? hlText}>
-            <span className="dot" style={{ background: hlDot }} />{hlText}{hl && !hl.mock ? ` · ${hl.label}` : hl?.mock ? ' · mock' : ''}
-          </span>
-          <span className="updated">Updated {ago(summary.data?.updatedAt ?? null, now)}</span>
+          {apiDown
+            ? <span className="updated" style={{ color: 'var(--neg)' }}>Backend unreachable</span>
+            : <span className="updated">Updated {ago(summary.data?.updatedAt ?? null, now)}</span>}
           <button className="btn btn-secondary" onClick={() => refresh.mutate()} disabled={refresh.isPending}>{refresh.isPending ? 'Refreshing…' : 'Refresh'}</button>
           <button className="btn btn-secondary btn-icon" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} title="Toggle theme" aria-label="Toggle theme">
             {theme === 'dark'
@@ -93,9 +87,11 @@ export function App() {
           <Kpis summary={summary.data} pnl={pnl.data} isAll={isAll} range={range} onSelect={setTab} />
           <PnlChart pnl={pnl.data} isAll={isAll} range={range} />
           <ActivityHeatmap days={activity.data} weeks={HEAT_WEEKS} />
-          <TradeList kind="best" trades={top.data?.best} rangeLabel={RANGE_TEXT[range][0]} isAll={isAll} names={NAMES} />
-          <TradeList kind="worst" trades={top.data?.worst} rangeLabel={RANGE_TEXT[range][0]} isAll={isAll} names={NAMES} />
           <PositionsTable positions={positions.data} isAll={isAll} names={NAMES} />
+          <div className="trades-pair" style={{ gridArea: 'trades' }}>
+            <TradeList kind="best" trades={top.data?.best} rangeLabel={RANGE_TEXT[range][0]} isAll={isAll} names={NAMES} />
+            <TradeList kind="worst" trades={top.data?.worst} rangeLabel={RANGE_TEXT[range][0]} isAll={isAll} names={NAMES} />
+          </div>
         </div>
       </div>
     </div>

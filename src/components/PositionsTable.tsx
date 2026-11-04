@@ -10,6 +10,7 @@ const HEAD: Record<Col, [string, boolean]> = {   // label, right-aligned
   liq: ['Liq.', true], lev: ['Lev.', true], margin: ['Margin', true], upnl: ['Unrealized PnL', true],
   roe: ['ROE', true], funding: ['Funding', true], opened: ['Opened', true],
 };
+const MAX_ROWS = 10;   // largest by notional (server sorts); the rest behind "Show all"
 const WIDE: Col[] = ['symbol', 'side', 'size', 'entry', 'mark', 'liq', 'lev', 'margin', 'upnl', 'roe', 'funding', 'opened'];
 // when the card can't show every column (e.g. Rail), bring PnL next to the symbol instead of scrolled away
 const NARROW: Col[] = ['symbol', 'side', 'upnl', 'roe', 'size', 'entry', 'mark', 'liq', 'lev', 'margin', 'funding', 'opened'];
@@ -46,6 +47,8 @@ export function PositionsTable({ positions, isAll, names }: { positions?: Positi
     return () => ro.disconnect();
   }, []);
   const order = narrow ? NARROW : WIDE;
+  const [showAll, setShowAll] = useState(false);
+  const shown = showAll ? positions : positions?.slice(0, MAX_ROWS);
 
   return (
     <section className="card elev-sm panel" style={{ gridArea: 'pos' }}>
@@ -65,7 +68,7 @@ export function PositionsTable({ positions, isAll, names }: { positions?: Positi
           <tbody>
             {!positions && <tr><td colSpan={13}><Skel w="100%" h={24} /></td></tr>}
             {positions && !positions.length && <tr><td colSpan={13} className="text-muted">No open positions.</td></tr>}
-            {positions?.map(p => {
+            {shown?.map(p => {
               const row = cells(p);
               return (
                 <tr key={`${p.exchange}:${p.sub}:${p.symbol}:${p.side}`}>
@@ -77,6 +80,11 @@ export function PositionsTable({ positions, isAll, names }: { positions?: Positi
           </tbody>
         </table>
       </div>
+      {positions && positions.length > MAX_ROWS && (
+        <button className="btn btn-ghost show-all" onClick={() => setShowAll(!showAll)}>
+          {showAll ? 'Show less' : `Show all (${positions.length})`}
+        </button>
+      )}
     </section>
   );
 }
