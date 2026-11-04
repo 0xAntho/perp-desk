@@ -7,6 +7,7 @@ import { HyperliquidAdapter } from './adapters/hyperliquid.js';
 import { MockAdapter } from './adapters/mock.js';
 import { PerplAdapter } from './adapters/perpl.js';
 import { createApp } from './app.js';
+import { DB_PATH, Store } from './store.js';
 import { Sync } from './sync.js';
 import type { Adapter } from './types.js';
 
@@ -44,7 +45,8 @@ if (env.EXTENDED_API_KEY) {
   adapters.push(new MockAdapter('extended', 'Extended', 9320, 2.5, 51));
 }
 
-const sync = new Sync(adapters);
+const store = new Store(DB_PATH);
+const sync = new Sync(adapters, console, store);
 sync.start();
 
 const auth = env.DASH_USER && env.DASH_PASS ? { username: env.DASH_USER, password: env.DASH_PASS } : undefined;
@@ -64,4 +66,4 @@ serve({ fetch: app.fetch, port: PORT, hostname: HOST }, info => {
   console.log(`Perp desk API on http://${HOST}:${info.port}`);
 });
 
-for (const sig of ['SIGINT', 'SIGTERM'] as const) process.on(sig, () => { sync.stop(); process.exit(0); });
+for (const sig of ['SIGINT', 'SIGTERM'] as const) process.on(sig, () => { sync.stop(); store.close(); process.exit(0); });

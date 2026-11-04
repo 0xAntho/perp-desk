@@ -1,7 +1,7 @@
 // Perpl adapter: REST API, every account request signed with an Ed25519 API key (read scope is enough).
 // Prices, sizes and amounts come as scaled integers: decimals are in /v1/pub/context.
 import { createHash, createPrivateKey, randomBytes, sign, type KeyObject } from 'node:crypto';
-import type { Account, Adapter, FundingPayment, Position, Trade } from '../types.js';
+import type { Account, Adapter, FundingPayment, Position, Since, Trade } from '../types.js';
 
 const API = 'https://app.perpl.xyz/api';
 const CHAIN_ID = 143;          // Monad mainnet
@@ -29,6 +29,8 @@ export class PerplAdapter implements Adapter {
   readonly mock = false;
   readonly label: string;
   private readonly key: KeyObject;
+  /** History account: one key reads one stream for all its Perpl accounts. A hash, never the key itself. */
+  private readonly account: string;
   private ctx: Context | null = null;
   private ctxAt = 0;
   private accounts = 1;
@@ -43,6 +45,7 @@ export class PerplAdapter implements Adapter {
     const pkcs8 = Buffer.concat([Buffer.from('302e020100300506032b657004220420', 'hex'), seed]);
     this.key = createPrivateKey({ key: pkcs8, format: 'der', type: 'pkcs8' });
     this.label = label;
+    this.account = 'key:' + createHash('sha256').update(apiKey).digest('hex').slice(0, 12);
   }
 
   /** GET with exponential backoff on 429 (1 s, 2 s, 4 s…, or the server's Retry-After). */
@@ -166,12 +169,13 @@ export class PerplAdapter implements Adapter {
   }
 
   /** Exit events of position history: realized PnL (gross) and the fees the closed size carried. */
-  async getTrades(since: number): Promise<Trade[]> {
-    const [ctx, rows] = await Promise.all([this.context(), this.positionHistory(since)]);
+  async getTrades(since: Since): Promise<Trade[]> {
+    const [ctx, rows] = await Promise.all([this.context(), this.positionHistory(since(this.account))]);
     return rows
       .filter(p => EXITS.has(p.sr) && p.dpnl != null)
       .map(p => ({
         exchange: this.id,
+        account: this.account,
         sub: this.sub(p.acc),
         id: `${p.acc}:${p.pid}:${p.at?.b}:${p.at?.tx}:${p.at?.l}`,
         symbol: ctx.markets.get(p.mkt)?.symbol ?? `#${p.mkt}`,
@@ -183,12 +187,13 @@ export class PerplAdapter implements Adapter {
   }
 
   /** Perpl settles funding when size comes off a position: `fnd` on exit events, + = received. */
-  async getFunding(since: number): Promise<FundingPayment[]> {
-    const [ctx, rows] = await Promise.all([this.context(), this.positionHistory(since)]);
+  async getFunding(since: Since): Promise<FundingPayment[]> {
+    const [ctx, rows] = await Promise.all([this.context(), this.positionHistory(since(this.account))]);
     return rows
       .filter(p => EXITS.has(p.sr) && +(p.fnd ?? 0) !== 0)
       .map(p => ({
         exchange: this.id,
+        account: this.account,
         id: `${p.acc}:${p.pid}:${p.at?.b}:${p.at?.tx}:${p.at?.l}`,
         symbol: ctx.markets.get(p.mkt)?.symbol ?? `#${p.mkt}`,
         usdc: +p.fnd / ctx.amount,

@@ -1,6 +1,6 @@
 // Mock adapter: deterministic fake history for exchanges not wired up yet.
 // Replace with a real adapter (same Adapter interface) — see Implementation Plan §3.
-import type { Account, Adapter, ExchangeId, FundingPayment, Position, Trade } from '../types.js';
+import type { Account, Adapter, ExchangeId, FundingPayment, Position, Since, Trade } from '../types.js';
 
 const PRICES: Record<string, number> = {
   BTC: 112400, ETH: 4120, SOL: 196, HYPE: 41.8, DOGE: 0.2134, ARB: 0.784, SUI: 3.42, LINK: 22.6,
@@ -43,7 +43,7 @@ export class MockAdapter implements Adapter {
     let regime = 1, n = 0;
     for (let d = 0; d < DAYS; d++) {
       const day = start + d * 86400e3;
-      this.funding.push({ exchange: id, id: `f${d}`, symbol: 'ALL', usdc: gauss() * balance * 0.0002, ts: day });
+      this.funding.push({ exchange: id, account: 'mock', id: `f${d}`, symbol: 'ALL', usdc: gauss() * balance * 0.0002, ts: day });
       if (rng() < 0.08) regime = 0.3 + rng() * 1.6;
       const dow = new Date(day).getDay();
       const r = rate * regime * (dow === 0 || dow === 6 ? 0.45 : 1);
@@ -52,7 +52,7 @@ export class MockAdapter implements Adapter {
         const ts = day + Math.floor(rng() * 86400e3);
         if (ts > Date.now()) continue;
         this.trades.push({
-          exchange: id, sub: null, id: `t${n++}`,
+          exchange: id, account: 'mock', sub: null, id: `t${n++}`,
           symbol: SYMS[Math.floor(rng() * nSym)],
           side: rng() < 0.55 ? 'Long' : 'Short',
           realizedPnl: (gauss() + 0.06) * balance * 0.0035 * (rng() < 0.08 ? 4 : 1),
@@ -98,6 +98,6 @@ export class MockAdapter implements Adapter {
     return { exchange: this.id, equity: this.balance + upnl, freeCollateral: this.balance * 0.6, ts: Date.now() };
   }
 
-  async getTrades(since: number): Promise<Trade[]> { return this.trades.filter(t => t.ts >= since); }
-  async getFunding(since: number): Promise<FundingPayment[]> { return this.funding.filter(f => f.ts >= since); }
+  async getTrades(since: Since): Promise<Trade[]> { return this.trades.filter(t => t.ts >= since('mock')); }
+  async getFunding(since: Since): Promise<FundingPayment[]> { return this.funding.filter(f => f.ts >= since('mock')); }
 }

@@ -1,18 +1,43 @@
 // Pure aggregation over the synced state. The frontend only renders what comes out of here.
 import type { ExchangeState } from './sync.js';
-import { HISTORY_DAYS } from './sync.js';
 import type { Trade } from './types.js';
 
 export const RANGES = {
   '24h': { hours: 24, step: 1 },
   '7D': { hours: 168, step: 2 },
   '30D': { hours: 720, step: 6 },
-  All: { hours: HISTORY_DAYS * 24, step: 24 },
+  All: { hours: null, step: 24 },   // since the oldest stored trade or funding payment
 } as const;
 export type Range = keyof typeof RANGES;
 export const isRange = (r: unknown): r is Range => typeof r === 'string' && r in RANGES;
 
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
+
+function rangeStart(states: ExchangeState[], range: Range, now: number) {
+  const { hours } = RANGES[range];
+  if (hours != null) return now - hours * 3600e3;
+  let oldest = now;
+  for (const s of states) {
+    for (const t of s.trades.values()) if (t.ts < oldest) oldest = t.ts;
+    for (const f of s.funding.values()) if (f.ts < oldest) oldest = f.ts;
+  }
+  return Math.min(oldest - 1, now - 24 * 3600e3);   // − 1: ranges exclude their start
+}
+
+/** Fills of the same order (same `group`) merged into one trade: PnL and fees summed, first fill's time. */
+function orders(trades: Trade[]): Trade[] {
+  const byGroup = new Map<string, Trade>();
+  const out: Trade[] = [];
+  for (const t of trades) {
+    if (t.group == null) { out.push(t); continue; }
+    const k = `${t.exchange}:${t.group}`, o = byGroup.get(k);
+    if (!o) { const m = { ...t }; byGroup.set(k, m); out.push(m); continue; }
+    o.realizedPnl += t.realizedPnl;
+    o.fee += t.fee;
+    if (t.ts < o.ts) o.ts = t.ts;
+  }
+  return out;
+}
 const upnlOf = (s: ExchangeState) => sum(s.positions.map(p => p.upnl));
 
 export function summary(states: ExchangeState[]) {
@@ -43,8 +68,8 @@ export function positions(states: ExchangeState[]) {
 }
 
 export function pnl(states: ExchangeState[], range: Range, now = Date.now()) {
-  const { hours, step } = RANGES[range];
-  const from = now - hours * 3600e3;
+  const { step } = RANGES[range];
+  const from = rangeStart(states, range, now);
   const points: number[] = [];
   for (let t = from; t < now; t += step * 3600e3) points.push(t);
   points.push(now);
@@ -73,8 +98,8 @@ export function pnl(states: ExchangeState[], range: Range, now = Date.now()) {
 }
 
 export function topTrades(states: ExchangeState[], range: Range, n = 5, now = Date.now()) {
-  const from = now - RANGES[range].hours * 3600e3;
-  const trades: Trade[] = states.flatMap(s => [...s.trades.values()]).filter(t => t.ts > from && t.ts <= now);
+  const from = rangeStart(states, range, now);
+  const trades = orders(states.flatMap(s => [...s.trades.values()]).filter(t => t.ts > from && t.ts <= now));
   return {
     best: trades.filter(t => t.realizedPnl > 0).sort((a, b) => b.realizedPnl - a.realizedPnl).slice(0, n),
     worst: trades.filter(t => t.realizedPnl < 0).sort((a, b) => a.realizedPnl - b.realizedPnl).slice(0, n),
@@ -88,8 +113,8 @@ export function activity(states: ExchangeState[], weeks: number, timeZone: strin
   catch { fmt = new Intl.DateTimeFormat('en-CA', { timeZone: 'UTC', year: 'numeric', month: '2-digit', day: '2-digit' }); }
   const from = now - (weeks + 1) * 7 * 86400e3;
   const counts: Record<string, number> = {};
-  for (const s of states) for (const t of s.trades.values()) {
-    if (t.ts < from || t.ts > now) continue;
+  const recent = states.flatMap(s => [...s.trades.values()]).filter(t => t.ts >= from && t.ts <= now);
+  for (const t of orders(recent)) {
     const k = fmt.format(t.ts); // YYYY-MM-DD
     counts[k] = (counts[k] ?? 0) + 1;
   }

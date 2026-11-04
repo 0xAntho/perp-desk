@@ -1,6 +1,6 @@
 // Arcus adapter: public REST reads by wallet address — no key needed. Reads subaccount 0 (accountIndex default).
 // History timestamps are epoch microseconds; the dashboard works in milliseconds.
-import type { Account, Adapter, FundingPayment, Position, Side, Trade } from '../types.js';
+import type { Account, Adapter, FundingPayment, Position, Side, Since, Trade } from '../types.js';
 
 const API = 'https://api.arcus.xyz/v1';
 const PAGE = 1000;             // server max for fills and funding
@@ -93,11 +93,12 @@ export class ArcusAdapter implements Adapter {
     });
   }
 
-  async getTrades(since: number): Promise<Trade[]> {
-    const fills: Fill[] = await this.history('/fills', 'fills', since, f => f.createdAt);
+  async getTrades(since: Since): Promise<Trade[]> {
+    const fills: Fill[] = await this.history('/fills', 'fills', since(this.address), f => f.createdAt);
     for (const f of fills) this.fills.set(f.tradeId, f);
     return fills.map(f => ({
       exchange: this.id,
+      account: this.address,
       sub: null,
       id: f.tradeId,
       symbol: symbolOf(f.marketDisplayName),
@@ -109,10 +110,11 @@ export class ArcusAdapter implements Adapter {
     }));
   }
 
-  async getFunding(since: number): Promise<FundingPayment[]> {
-    const rows = await this.history('/funding', 'fundingPayments', since, x => x.time);
+  async getFunding(since: Since): Promise<FundingPayment[]> {
+    const rows = await this.history('/funding', 'fundingPayments', since(this.address), x => x.time);
     return rows.map(x => ({
       exchange: this.id,
+      account: this.address,
       id: `${x.marketId}:${x.time}`,   // one payment per market per funding tick
       symbol: symbolOf(x.marketDisplayName),
       usdc: +x.payment,                // + = received

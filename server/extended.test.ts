@@ -76,7 +76,7 @@ test('one account: balance, positions, gross trades with fees apart, funding', a
 
   const trades = [...s.trades.values()];
   assert.equal(trades.length, 1, 'positions without closedTime are still open');
-  assert.equal(trades[0].id, '0:2078423715724394501', 'keeps every digit of the 19-digit id');
+  assert.equal(trades[0].id, '1001:2078423715724394501', 'keeps every digit of the 19-digit id');
   assert.equal(trades[0].realizedPnl, 0.06, 'gross trade PnL, not the net realisedPnl');
   assert.ok(Math.abs(trades[0].fee - 0.007103) < 1e-12);
   assert.equal(trades[0].ts, now - 3 * H);

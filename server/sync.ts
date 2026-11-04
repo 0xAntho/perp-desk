@@ -1,8 +1,9 @@
 // Sync jobs (Implementation Plan §4): poll every adapter in parallel, cache in memory.
 // One failing exchange never blocks the others — it is just marked stale/error.
+// With a Store, history is persisted: a restart loads it and only fetches what came after.
+import type { Store } from './store.js';
 import type { Account, Adapter, ExchangeId, FundingPayment, Position, Trade } from './types.js';
 
-export const HISTORY_DAYS = 371;
 const LIVE_EVERY = 15_000;
 const HISTORY_EVERY = 60_000;
 const OVERLAP = 5 * 60e3; // re-read the last few minutes of history to catch late fills
@@ -19,7 +20,8 @@ export interface ExchangeState {
   error: string | null;
   liveAt: number | null;
   historyAt: number | null;
-  historyCursor: number | null;
+  cursors: Map<string, number>;  // per account: newest history row (or last empty fetch)
+  opened: Map<string, number>;   // open time of each current position, kept across restarts
 }
 
 export class Sync {
@@ -27,12 +29,24 @@ export class Sync {
   private timers: NodeJS.Timeout[] = [];
   private inflight = new Map<string, Promise<void>>();
 
-  constructor(adapters: Adapter[], private readonly log = console) {
-    this.states = adapters.map(adapter => ({
-      adapter, account: null, positions: [], trades: new Map(), funding: new Map(),
-      status: 'loading', error: null, liveAt: null, historyAt: null, historyCursor: null,
-    }));
+  constructor(adapters: Adapter[], private readonly log = console, private readonly store?: Store) {
+    this.states = adapters.map(adapter => {
+      // mock data is never stored: it would mix with the real history once keys are added
+      const stored = store && !adapter.mock;
+      const trades = stored ? store.trades(adapter.id) : [];
+      const funding = stored ? store.funding(adapter.id) : [];
+      const cursors = new Map<string, number>();
+      for (const x of [...trades, ...funding]) cursors.set(x.account, Math.max(cursors.get(x.account) ?? -Infinity, x.ts));
+      return {
+        adapter, account: null, positions: [],
+        trades: new Map(trades.map(t => [t.id, t])), funding: new Map(funding.map(f => [f.id, f])),
+        status: 'loading', error: null, liveAt: null, historyAt: null, cursors,
+        opened: stored ? store.opened(adapter.id) : new Map(),
+      };
+    });
   }
+
+  private persist(s: ExchangeState) { return this.store && !s.adapter.mock ? this.store : null; }
 
   get(id: ExchangeId) { return this.states.find(s => s.adapter.id === id); }
 
@@ -73,6 +87,8 @@ export class Sync {
         const [account, positions] = await Promise.all([s.adapter.getAccount(), s.adapter.getPositions()]);
         s.account = account;
         s.positions = positions;
+        this.keepOpenTimes(s);
+        this.persist(s)?.saveEquity(s.adapter.id, account.ts, account.equity);
         s.liveAt = Date.now();
         s.error = null;
         if (s.historyAt != null || s.status !== 'loading') s.status = 'live';
@@ -84,21 +100,48 @@ export class Sync {
 
   syncHistory(s: ExchangeState) {
     return this.once('hist:' + s.adapter.id, async () => {
-      const since = s.historyCursor != null
-        ? s.historyCursor - OVERLAP
-        : Date.now() - HISTORY_DAYS * 86400e3;
+      // per account: everything the exchange still serves for one we have nothing of (a key or
+      // sub-account added later included), otherwise only what came after its newest row
+      const asked = new Set<string>();
+      const since = (account: string) => {
+        asked.add(account);
+        const c = s.cursors.get(account);
+        return c != null ? c - OVERLAP : 0;
+      };
+      const started = Date.now();
       try {
         const [trades, funding] = await Promise.all([s.adapter.getTrades(since), s.adapter.getFunding(since)]);
+        this.persist(s)?.saveTrades(trades);
+        this.persist(s)?.saveFunding(funding);
         for (const t of trades) s.trades.set(t.id, t);
         for (const f of funding) s.funding.set(f.id, f);
-        const last = Math.max(since + OVERLAP, ...trades.map(t => t.ts), ...funding.map(f => f.ts));
-        s.historyCursor = Math.min(last, Date.now());
+        const newest = new Map<string, number>();
+        for (const x of [...trades, ...funding]) newest.set(x.account, Math.max(newest.get(x.account) ?? -Infinity, x.ts));
+        // an account with no history at all resumes from this fetch instead of from 0 again
+        for (const a of asked) s.cursors.set(a, Math.max(s.cursors.get(a) ?? started - OVERLAP, newest.get(a) ?? -Infinity));
         s.historyAt = Date.now();
         if (s.liveAt != null) { s.status = 'live'; s.error = null; }
       } catch (e) {
         this.fail(s, e, 'history');
       }
     });
+  }
+
+  /**
+   * Adapters derive open times from the history they fetched since start, which no longer reaches
+   * back to the open after a restart: keep the earliest time seen while the position stays open.
+   * Limit: a position closed and reopened while the server was down keeps its first open time.
+   */
+  private keepOpenTimes(s: ExchangeState) {
+    const next = new Map<string, number>();
+    for (const p of s.positions) {
+      const key = `${p.sub ?? ''}|${p.symbol}|${p.side}`;
+      const known = s.opened.get(key);
+      if (known != null && (p.openedAt == null || known < p.openedAt)) p.openedAt = known;
+      if (p.openedAt != null) next.set(key, p.openedAt);
+    }
+    s.opened = next;
+    this.persist(s)?.saveOpened(s.adapter.id, next);
   }
 
   private fail(s: ExchangeState, e: unknown, what: string) {

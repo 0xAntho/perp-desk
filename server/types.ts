@@ -30,6 +30,7 @@ export interface Position {
 /** One row per fill (or per closed position, when the exchange reports it that way). */
 export interface Trade {
   exchange: ExchangeId;
+  account: string;         // stable account id (wallet, exchange account id…): history resumes per account
   sub: string | null;
   id: string;
   symbol: string;
@@ -37,15 +38,20 @@ export interface Trade {
   realizedPnl: number;     // gross, before fees
   fee: number;
   ts: number;
+  group?: string;          // fills sharing a group are one order: merged in trade lists and activity counts
 }
 
 export interface FundingPayment {
   exchange: ExchangeId;
+  account: string;
   id: string;
   symbol: string;
   usdc: number;            // + = received, − = paid
   ts: number;
 }
+
+/** Where to resume an account's history: 0 for an account with nothing stored yet. */
+export type Since = (account: string) => number;
 
 export interface Adapter {
   readonly id: ExchangeId;
@@ -55,7 +61,7 @@ export interface Adapter {
   readonly label: string;
   getAccount(): Promise<Account>;
   getPositions(): Promise<Position[]>;
-  /** Incremental: everything with ts >= since. Must be safe to call repeatedly (dedupe by id). */
-  getTrades(since: number): Promise<Trade[]>;
-  getFunding(since: number): Promise<FundingPayment[]>;
+  /** Incremental: everything with ts >= since(account), per account. Must be safe to call repeatedly (dedupe by id). */
+  getTrades(since: Since): Promise<Trade[]>;
+  getFunding(since: Since): Promise<FundingPayment[]>;
 }

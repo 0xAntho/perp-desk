@@ -1,6 +1,6 @@
 // Hyperliquid adapter: public info API, read by wallet address — no keys needed.
 // Sub-accounts of the main wallet are discovered and included automatically.
-import type { Account, Adapter, FundingPayment, Position, Side, Trade } from '../types.js';
+import type { Account, Adapter, FundingPayment, Position, Side, Since, Trade } from '../types.js';
 
 const API = 'https://api.hyperliquid.xyz/info';
 const SUBS_TTL = 10 * 60e3;
@@ -15,10 +15,12 @@ interface Fill {
 interface SubAccount { label: string; user: string; fills: Fill[] }
 
 // '@n' and 'a/b' are spot pairs, '#n' are outcome tokens
-const isPerp = (coin: string) => !!coin && !coin.startsWith('@') && !coin.startsWith('#') && !coin.includes('/');
+export const isPerp = (coin: string) => !!coin && !coin.startsWith('@') && !coin.startsWith('#') && !coin.includes('/');
 const fillId = (f: Fill) => `${f.hash}:${f.tid}:${f.time}`;
-const sideOf = (f: Fill): Side =>
+export const sideOf = (f: Pick<Fill, 'dir'> & Partial<Pick<Fill, 'side'>>): Side =>
   /Short/.test(f.dir) ? 'Short' : /Long/.test(f.dir) ? 'Long' : f.side === 'B' ? 'Long' : 'Short';
+/** Fills of one transaction are one order; liquidations and other system fills carry a zero hash. */
+export const groupOf = (hash: string) => (/^0x0*$/.test(hash) ? undefined : hash);
 
 export class HyperliquidAdapter implements Adapter {
   readonly id = 'hyperliquid' as const;
@@ -163,11 +165,13 @@ export class HyperliquidAdapter implements Adapter {
     return out;
   }
 
-  async getTrades(since: number): Promise<Trade[]> {
+  // per sub-account; one call covers every perp dex (HIP-3 included), so there is no per-dex cursor
+  async getTrades(since: Since): Promise<Trade[]> {
     const accounts = await this.getAccounts();
     const out: Trade[] = [];
     await Promise.all(accounts.map(async a => {
-      const fills: Fill[] = (await this.paged('userFillsByTime', a.user, since, { aggregateByTime: true }))
+      // one row per fill, like Hyperliquid's CSV export: an order's fills are merged downstream by `group`
+      const fills: Fill[] = (await this.paged('userFillsByTime', a.user, since(a.user), { aggregateByTime: false }))
         .filter((f: Fill) => isPerp(f.coin));
       // keep a local copy per sub-account so positions can show their open time
       const seen = new Set(a.fills.map(fillId));
@@ -176,6 +180,7 @@ export class HyperliquidAdapter implements Adapter {
       for (const f of fills) {
         out.push({
           exchange: this.id,
+          account: a.user,
           sub: this.multi ? a.label : null,
           id: `${a.user}:${fillId(f)}`,
           symbol: f.coin,
@@ -183,17 +188,19 @@ export class HyperliquidAdapter implements Adapter {
           realizedPnl: +f.closedPnl || 0,
           fee: +f.fee || 0,
           ts: f.time,
+          group: groupOf(f.hash),
         });
       }
     }));
     return out;
   }
 
-  async getFunding(since: number): Promise<FundingPayment[]> {
+  async getFunding(since: Since): Promise<FundingPayment[]> {
     const accounts = await this.getAccounts();
     const lists = await Promise.all(accounts.map(async a =>
-      (await this.paged('userFunding', a.user, since)).map((x: Json) => ({
+      (await this.paged('userFunding', a.user, since(a.user))).map((x: Json) => ({
         exchange: this.id,
+        account: a.user,
         id: `${a.user}:${x.hash}:${x.time}:${x.delta?.coin}`,
         symbol: String(x.delta?.coin ?? ''),
         usdc: +(x.delta?.usdc ?? 0),

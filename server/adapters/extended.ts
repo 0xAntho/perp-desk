@@ -1,6 +1,6 @@
 // Extended adapter: REST API with a read-only API key (X-Api-Key header, no signing for reads).
 // One API key = one Extended sub-account; several keys are merged into one exchange in the UI.
-import type { Account, Adapter, FundingPayment, Position, Side, Trade } from '../types.js';
+import type { Account, Adapter, FundingPayment, Position, Side, Since, Trade } from '../types.js';
 
 const API = 'https://api.starknet.extended.exchange/api/v1';
 const PAGE = 1000;
@@ -17,8 +17,8 @@ export class ExtendedAdapter implements Adapter {
   readonly name = 'Extended';
   readonly mock = false;
   private readonly keys: string[];
-  private unique: string[] | null = null;
-  private lookup: Promise<string[]> | null = null;
+  private unique: { key: string; account: string }[] | null = null;
+  private lookup: Promise<{ key: string; account: string }[]> | null = null;
 
   constructor(apiKeys: string[], private readonly fetchImpl: Fetch = fetch) {
     this.keys = apiKeys.map(k => k.trim()).filter(Boolean);
@@ -31,26 +31,27 @@ export class ExtendedAdapter implements Adapter {
   }
 
   /** Keys that reach distinct accounts: two keys of the same account would count it twice. */
-  private accounts(): Promise<string[]> {
+  private accounts(): Promise<{ key: string; account: string }[]> {
     this.lookup ??= this.lookupAccounts().catch(e => { this.lookup = null; throw e; });   // retried on failure
     return this.lookup;
   }
 
-  private async lookupAccounts(): Promise<string[]> {
+  private async lookupAccounts(): Promise<{ key: string; account: string }[]> {
     const ids = await Promise.all(this.keys.map(async k => (await this.get(k, '/user/account/info'))?.data?.accountId));
     const seen = new Set<string>();
-    this.unique = this.keys.filter((_, i) => {
-      const id = String(ids[i]);
-      if (seen.has(id)) { console.warn(`[extended] key #${i + 1} reaches account ${id} again: ignored`); return false; }
-      seen.add(id);
-      return true;
+    this.unique = [];
+    this.keys.forEach((key, i) => {
+      const account = String(ids[i]);
+      if (seen.has(account)) { console.warn(`[extended] key #${i + 1} reaches account ${account} again: ignored`); return; }
+      seen.add(account);
+      this.unique!.push({ key, account });
     });
     return this.unique;
   }
 
-  /** Runs `fn` for every account and concatenates the results. */
-  private async each<T>(fn: (key: string, i: number) => Promise<T[]>): Promise<T[]> {
-    return (await Promise.all((await this.accounts()).map(fn))).flat();
+  /** Runs `fn` for every account (its key and Extended account id) and concatenates the results. */
+  private async each<T>(fn: (key: string, account: string) => Promise<T[]>): Promise<T[]> {
+    return (await Promise.all((await this.accounts()).map(a => fn(a.key, a.account)))).flat();
   }
 
   /** GET an endpoint and unwrap the {status, data, pagination} envelope. 404 → null. */
@@ -116,33 +117,41 @@ export class ExtendedAdapter implements Adapter {
   }
 
   /** Closed positions as trades: Extended reports realized PnL per position, not per fill. */
-  async getTrades(since: number): Promise<Trade[]> {
+  async getTrades(since: Since): Promise<Trade[]> {
     // sorted by id (= open order), so a position opened before `since` can still have closed after it
-    return this.each(async (k, i) => (await this.paged(k, '/user/positions/history', {}))
-      .filter(p => p.closedTime != null && p.closedTime >= since)
-      .map(p => ({
-        exchange: this.id,
-        sub: null,
-        id: `${i}:${p.id}`,
-        symbol: symbolOf(p.market),
-        side: sideOf(p.side),
-        // realisedPnl is net (trade + funding + fees); the dashboard wants gross, fees apart
-        realizedPnl: +(p.realisedPnlBreakdown?.tradePnl ?? p.realisedPnl ?? 0),
-        fee: -(+(p.realisedPnlBreakdown?.openFees ?? 0) + +(p.realisedPnlBreakdown?.closeFees ?? 0)),
-        ts: p.closedTime,
-      })));
+    return this.each(async (k, account) => {
+      const from = since(account);
+      return (await this.paged(k, '/user/positions/history', {}))
+        .filter(p => p.closedTime != null && p.closedTime >= from)
+        .map(p => ({
+          exchange: this.id,
+          account,
+          sub: null,
+          id: `${account}:${p.id}`,
+          symbol: symbolOf(p.market),
+          side: sideOf(p.side),
+          // realisedPnl is net (trade + funding + fees); the dashboard wants gross, fees apart
+          realizedPnl: +(p.realisedPnlBreakdown?.tradePnl ?? p.realisedPnl ?? 0),
+          fee: -(+(p.realisedPnlBreakdown?.openFees ?? 0) + +(p.realisedPnlBreakdown?.closeFees ?? 0)),
+          ts: p.closedTime,
+        }));
+    });
   }
 
-  async getFunding(since: number): Promise<FundingPayment[]> {
-    return this.each(async (k, i) => (await this.paged(k, '/user/funding/history', { startTime: since }, page => page.some(f => f.paidTime < since)))
-      .filter(f => f.paidTime >= since)
-      .map(f => ({
-        exchange: this.id,
-        id: `${i}:${f.id}`,
-        symbol: symbolOf(f.market),
-        usdc: +(f.fundingFee ?? 0),           // + = received
-        ts: f.paidTime,
-      })));
+  async getFunding(since: Since): Promise<FundingPayment[]> {
+    return this.each(async (k, account) => {
+      const from = since(account);
+      return (await this.paged(k, '/user/funding/history', { startTime: from }, page => page.some(f => f.paidTime < from)))
+        .filter(f => f.paidTime >= from)
+        .map(f => ({
+          exchange: this.id,
+          account,
+          id: `${account}:${f.id}`,
+          symbol: symbolOf(f.market),
+          usdc: +(f.fundingFee ?? 0),           // + = received
+          ts: f.paidTime,
+        }));
+    });
   }
 }
 
