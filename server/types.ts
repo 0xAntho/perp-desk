@@ -1,6 +1,6 @@
 // Normalized data model: one shape for all exchanges (see Implementation Plan §2).
 
-export type ExchangeId = 'hyperliquid' | 'perpl' | 'arcus' | 'extended';
+export type ExchangeId = 'hyperliquid' | 'perpl' | 'arcus' | 'extended' | 'variational';
 export type Side = 'Long' | 'Short';
 
 export interface Account {

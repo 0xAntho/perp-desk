@@ -15,6 +15,7 @@ const EXCHANGES = [
   { id: 'perpl', name: 'Perpl' },
   { id: 'arcus', name: 'Arcus' },
   { id: 'extended', name: 'Extended' },
+  { id: 'variational', name: 'Variational' },
 ] as const;
 const NAMES: Record<string, string> = Object.fromEntries(EXCHANGES.map(e => [e.id, e.name]));
 

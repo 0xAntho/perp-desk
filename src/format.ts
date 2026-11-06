@@ -6,6 +6,7 @@ export const EXCHANGE_COLOR: Record<ExchangeId | 'total', string> = {
   perpl: 'var(--ex-perpl)',
   arcus: 'var(--ex-arcus)',
   extended: 'var(--ex-extended)',
+  variational: 'var(--ex-variational)',
 };
 
 /** Profit/loss colour class; exactly 0 stays neutral. */

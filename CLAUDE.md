@@ -14,6 +14,7 @@ Personal multi-exchange perp trading dashboard (Hyperliquid, Perpl, Arcus, Exten
   - `adapters/extended.ts` — real adapter (read-only `X-Api-Key`). Several comma-separated keys are merged into one "Extended" (same market+side → one row); a key reaching an already-seen account is ignored. Trades = closed positions, gross `tradePnl` with open+close fees apart. 19-digit ids/cursors are parsed as strings.
   - `adapters/perpl.ts` — real adapter (Ed25519-signed requests, read-scope key). Scaled integers via `/v1/pub/context`. Trades = exit events of position history (`dpnl` gross, `fee`); funding = `fnd` on those exits. REST limits unpublished: backs off on 429, paces pages; the first backfill takes ~2 min.
   - `adapters/arcus.ts` — real adapter (public REST by wallet address, subaccount 0; `ARCUS_ADDRESS`, defaults to `HL_ADDRESS`). Times are epoch µs. `closedPnl` is net of fee (added back for gross); no liq price (`null`). Pages by moving `to` to the oldest row.
+  - `adapters/variational.ts` — no API yet (planned for 2026-11): history only, from `variational-csv.ts` + `import-variational.ts` (the trade CSV export). The export has fills only, so realized PnL is rebuilt by average cost per underlying; fee 0, no funding, balance $0, no positions. Replace with a real adapter when the API ships.
   - `adapters/mock.ts` — deterministic fake data, used for any exchange whose keys/address are missing from `.env` (shown with a "Mock" tag in the UI).
   - `store.ts` — SQLite (`node:sqlite`, file `data/perp-desk.db`, git-ignored): trades, funding, open times of current positions, hourly equity snapshots (stored, not shown yet). Mock adapters are never stored.
   - `sync.ts` — positions/account every 15 s, trades/funding every 60 s. History is loaded from the store at start and resumes **per account** (`Trade.account`/`FundingPayment.account`: HL wallet, Extended account id, Perpl key hash, Arcus address) from its newest stored row; an account with nothing stored (first run, key or sub-account added later) gets everything the exchange still serves. Open times are kept across restarts (adapters only see fills since start). A failing exchange goes "stale"/"error" without blocking the others.
@@ -29,11 +30,12 @@ Personal multi-exchange perp trading dashboard (Hyperliquid, Perpl, Arcus, Exten
 - `npm run build` — typechecks both client and server, then builds
 - `npm start` — production: one process serving API + built dashboard
 - `npm run import:hl data/hl_history.csv` — import the Hyperliquid CSV once (server must have run once; restart it after). Keep exports in `data/`: the repo is public.
+- `npm run import:variational data/export-trades.csv` — load Variational's trade CSV (re-running a newer export replaces the rows; restart the server after).
 - Node 24+ (`node:sqlite` needs 22.5+).
 
 ## Status and next steps
 1. All four exchanges run on live data (checked 2026-11-03). Perpl totals match its own all-time stats; Arcus matches its documented invariant (Σ closedPnl + Σ funding = netQuoteBalance − net deposits). Each adapter has a fixture test (`server/<exchange>.test.ts`).
-2. SQLite history done (2026-11-04); older Hyperliquid fills come from the CSV import. Changing the schema: bump `SCHEMA` in `store.ts` (the database is rebuilt and re-downloaded; re-run the CSV import).
+2. SQLite history done (2026-11-04); older Hyperliquid fills come from the CSV import. Changing the schema: bump `SCHEMA` in `store.ts` (the database is rebuilt and re-downloaded; re-run the CSV imports, Hyperliquid and Variational).
 3. Optional: push live marks/uPnL over SSE instead of 15 s polling (plan §6.4).
 
 ## Conventions and decisions

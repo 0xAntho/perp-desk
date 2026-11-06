@@ -11,6 +11,7 @@
     "start": "tsx server/index.ts --production",
     "test": "node server/run-tests.mjs",
     "import:hl": "tsx server/import-hl.ts",
+    "import:variational": "tsx server/import-variational.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p server/tsconfig.json --noEmit"
   },
   "dependencies": {

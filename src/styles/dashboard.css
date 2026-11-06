@@ -7,6 +7,7 @@
   --ex-perpl: var(--color-accent-500);
   --ex-arcus: var(--color-accent-800);
   --ex-extended: var(--color-neutral-500);
+  --ex-variational: var(--color-accent-2-400);
   --heat0: color-mix(in srgb, var(--color-text) 8%, transparent);
   --heat1: var(--color-accent-2-300);
   --heat2: var(--color-accent-2-500);

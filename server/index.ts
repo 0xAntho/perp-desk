@@ -6,6 +6,7 @@ import { ExtendedAdapter } from './adapters/extended.js';
 import { HyperliquidAdapter } from './adapters/hyperliquid.js';
 import { MockAdapter } from './adapters/mock.js';
 import { PerplAdapter } from './adapters/perpl.js';
+import { VariationalAdapter } from './adapters/variational.js';
 import { createApp } from './app.js';
 import { DB_PATH, Store } from './store.js';
 import { Sync } from './sync.js';
@@ -44,6 +45,7 @@ if (env.EXTENDED_API_KEY) {
   console.warn('EXTENDED_API_KEY not set: Extended runs on mock data. Add it to .env.');
   adapters.push(new MockAdapter('extended', 'Extended', 9320, 2.5, 51));
 }
+adapters.push(new VariationalAdapter());   // no API yet: CSV history only (`npm run import:variational`)
 
 const store = new Store(DB_PATH);
 const sync = new Sync(adapters, console, store);
