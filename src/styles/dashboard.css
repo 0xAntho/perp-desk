@@ -166,6 +166,22 @@ html:has(.dash[data-theme="dark"]) { background: #1d1a16; color-scheme: dark; }
 .positions .r { text-align: right; }
 .positions .nowrap { white-space: nowrap; }
 
+/* delta-neutral pairs: drag a row onto the opposite leg, or use the link button (touch) */
+.positions .pair-col { width: 28px; padding-right: 0; }
+.pair-btn { width: 26px; height: 26px; padding: 0; justify-content: center; color: var(--faint); }
+.pair-btn[aria-pressed="true"], .pair-target .pair-btn { color: var(--color-accent); }
+.positions tr[draggable] { cursor: grab; }
+.positions tr.picked td { background: color-mix(in srgb, var(--color-accent) 8%, transparent); }
+.positions tr.pair-target td { background: color-mix(in srgb, var(--color-accent-2) 6%, transparent); }
+.positions tr.drop td { background: color-mix(in srgb, var(--color-accent-2) 18%, transparent); }
+.positions .pair-row { cursor: pointer; }
+.positions .pair-row:hover td { background: color-mix(in srgb, var(--color-text) 4%, transparent); }
+.positions .leg-row td { background: color-mix(in srgb, var(--color-text) 3%, transparent); }
+.chevron { display: inline-block; vertical-align: -2px; margin-right: 4px; transition: transform .15s; }
+.chevron.open { transform: rotate(90deg); }
+.pair-hint { margin-left: auto; display: inline-flex; align-items: center; gap: var(--space-1); }
+@media (prefers-reduced-motion: reduce) { .chevron { transition: none; } }
+
 /* loading skeletons */
 .skeleton { background: var(--rule); border-radius: var(--radius-sm); min-height: 1em; animation: pulse 1.4s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: .5; } }

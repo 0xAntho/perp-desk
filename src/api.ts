@@ -1,8 +1,8 @@
 // Backend client + TanStack Query hooks (Implementation Plan §6).
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
-import type { ExchangeId, Position, Trade } from '../server/types';
+import type { ExchangeId, Leg, Position, PositionRow, Trade } from '../server/types';
 
-export type { ExchangeId, Position, Trade };
+export type { ExchangeId, Leg, Position, PositionRow, Trade };
 export type Tab = 'all' | ExchangeId;
 export type Range = '24h' | '7D' | '30D' | 'All';
 export type Status = 'loading' | 'live' | 'stale' | 'error';
@@ -33,7 +33,7 @@ const TZ = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 export const useSummary = (exchange: Tab) =>
   useQuery({ queryKey: ['summary', exchange], queryFn: () => get<Summary>('summary', { exchange }), refetchInterval: FAST });
 export const usePositions = (exchange: Tab) =>
-  useQuery({ queryKey: ['positions', exchange], queryFn: () => get<Position[]>('positions', { exchange }), refetchInterval: FAST });
+  useQuery({ queryKey: ['positions', exchange], queryFn: () => get<PositionRow[]>('positions', { exchange }), refetchInterval: FAST });
 export const usePnl = (exchange: Tab, range: Range) =>
   useQuery({ queryKey: ['pnl', exchange, range], queryFn: () => get<Pnl>('pnl', { exchange, range }), refetchInterval: SLOW });
 export const useTopTrades = (exchange: Tab, range: Range) =>
@@ -48,4 +48,18 @@ export function useRefresh() {
     mutationFn: async () => { const r = await fetch('/api/refresh', { method: 'POST' }); if (!r.ok) throw new Error('refresh failed'); },
     onSettled: () => qc.invalidateQueries(),
   });
+}
+
+/** Pairs two open positions (by key) into a delta-neutral row, or unpairs one (by its long key). */
+export function usePairing() {
+  const qc = useQueryClient();
+  const done = () => qc.invalidateQueries({ queryKey: ['positions'] });
+  const send = async (method: string, path: string, body?: object) => {
+    const r = await fetch(`/api/${path}`, { method, headers: { 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
+    if (!r.ok) throw new Error((await r.json().catch(() => null))?.error ?? `HTTP ${r.status}`);
+  };
+  return {
+    pair: useMutation({ mutationFn: (v: { a: string; b: string }) => send('POST', 'pairs', v), onSettled: done }),
+    unpair: useMutation({ mutationFn: (key: string) => send('DELETE', `pairs?key=${encodeURIComponent(key)}`), onSettled: done }),
+  };
 }

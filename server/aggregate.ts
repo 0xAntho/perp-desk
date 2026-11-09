@@ -1,6 +1,6 @@
 // Pure aggregation over the synced state. The frontend only renders what comes out of here.
 import type { ExchangeState } from './sync.js';
-import type { Trade } from './types.js';
+import { posKey, type Leg, type Pair, type PositionRow, type Trade } from './types.js';
 
 export const RANGES = {
   '24h': { hours: 24, step: 1 },
@@ -61,10 +61,33 @@ export function summary(states: ExchangeState[]) {
   };
 }
 
-export function positions(states: ExchangeState[]) {
-  return states
-    .flatMap(s => s.positions)
-    .sort((a, b) => b.mark * b.size - a.mark * a.size);
+/**
+ * Open positions, largest notional first. Two legs the user paired become one delta-neutral row,
+ * placed where its larger leg would be; a pair with a leg outside `states` (another tab) is shown as plain legs.
+ */
+export function positions(states: ExchangeState[], pairs: Pair[] = []): PositionRow[] {
+  const legs: Leg[] = states.flatMap(s => s.positions)
+    .sort((a, b) => b.mark * b.size - a.mark * a.size)
+    .map(p => ({ ...p, key: posKey(p) }));
+  const byKey = new Map(legs.map(l => [l.key, l]));
+  const pairOf = new Map<string, Pair>();
+  for (const p of pairs) if (byKey.has(p.long) && byKey.has(p.short)) { pairOf.set(p.long, p); pairOf.set(p.short, p); }
+  const rows: PositionRow[] = [];
+  const done = new Set<Pair>();
+  for (const l of legs) {
+    const p = pairOf.get(l.key);
+    if (!p) { rows.push({ kind: 'position', ...l }); continue; }
+    if (done.has(p)) continue;   // its other leg came first
+    done.add(p);
+    const long = byKey.get(p.long)!, short = byKey.get(p.short)!;
+    const collateral = long.margin + short.margin, upnl = long.upnl + short.upnl;
+    const opened = [long.openedAt, short.openedAt].filter((t): t is number => t != null);
+    rows.push({
+      kind: 'pair', key: p.long, long, short, collateral, upnl, roe: collateral ? upnl / collateral : 0,
+      funding: long.funding + short.funding, openedAt: opened.length ? Math.min(...opened) : null,
+    });
+  }
+  return rows;
 }
 
 export function pnl(states: ExchangeState[], range: Range, now = Date.now()) {

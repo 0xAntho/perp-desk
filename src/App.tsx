@@ -88,7 +88,7 @@ export function App() {
           <Kpis summary={summary.data} pnl={pnl.data} isAll={isAll} range={range} onSelect={setTab} />
           <PnlChart pnl={pnl.data} isAll={isAll} range={range} />
           <ActivityHeatmap days={activity.data} weeks={HEAT_WEEKS} />
-          <PositionsTable positions={positions.data} isAll={isAll} names={NAMES} />
+          <PositionsTable rows={positions.data} isAll={isAll} names={NAMES} />
           <div className="trades-pair" style={{ gridArea: 'trades' }}>
             <TradeList kind="best" trades={top.data?.best} rangeLabel={RANGE_TEXT[range][0]} isAll={isAll} names={NAMES} />
             <TradeList kind="worst" trades={top.data?.worst} rangeLabel={RANGE_TEXT[range][0]} isAll={isAll} names={NAMES} />

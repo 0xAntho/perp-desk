@@ -6,7 +6,7 @@ import * as agg from './aggregate.js';
 import { importable, parseHlCsv } from './hl-csv.js';
 import { Store } from './store.js';
 import { Sync } from './sync.js';
-import type { Adapter, FundingPayment, Position, Trade } from './types.js';
+import { posKey, type Adapter, type FundingPayment, type Position, type Trade } from './types.js';
 
 const H = 3600e3;
 const quiet = { warn() {} } as unknown as Console;
@@ -152,4 +152,35 @@ test('aggregate: fills of one order count once in top trades and activity; All s
   assert.equal(curve.flows.gross, 41.5);
   const days = agg.activity(sync.states, 60, 'UTC', now);
   assert.equal(days.reduce((s, d) => s + d.count, 0), 6 - 1);
+});
+
+test('pairs: one long + one short become one delta-neutral row, kept across restarts, dropped when a leg closes', async () => {
+  const leg = (side: 'Long' | 'Short', o: Partial<Position>): Position => ({ ...position(1000), side, ...o });
+  const long = leg('Long', { mark: 100, size: 2, margin: 40, upnl: 12, funding: -3, openedAt: 2000 });
+  const short = leg('Short', { symbol: 'xyz:BTC', mark: 100, size: 2, margin: 60, upnl: -10, funding: 5, openedAt: 1000 });
+  const other = leg('Long', { symbol: 'ETH', mark: 10, size: 1 });
+  const opts = { positions: [long, short, other] };
+  const st = new Store(':memory:');
+  const s1 = new Sync([fake([], opts).ad], quiet, st);
+  await s1.refreshAll();
+  const [kl, ks, ko] = [long, short, other].map(posKey);
+
+  assert.equal(s1.pair(kl, ko), 'a pair needs one long and one short');
+  assert.equal(s1.pair(kl, 'hyperliquid||NOPE|Short'), 'position not open');
+  assert.equal(s1.pair(ks, kl), null);   // order doesn't matter
+  assert.equal(s1.pair(ko, ks), 'position already paired');
+
+  const rows = agg.positions(s1.states, s1.pairs);
+  assert.deepEqual(rows.map(r => r.kind), ['pair', 'position']);
+  const p = rows[0];
+  assert.ok(p.kind === 'pair');
+  assert.deepEqual([p.long.key, p.short.key, p.collateral, p.upnl, p.roe, p.funding, p.openedAt], [kl, ks, 100, 2, 0.02, 2, 1000]);
+
+  const s2 = new Sync([fake([], opts).ad], quiet, st);   // restart
+  assert.deepEqual(s2.pairs, [{ long: kl, short: ks }]);
+  await s2.refreshAll();
+  assert.equal(s2.pairs.length, 1);
+  opts.positions = [long, other];   // short leg closed
+  await s2.syncLive(s2.states[0]);
+  assert.deepEqual([s2.pairs, st.pairs()], [[], []]);
 });

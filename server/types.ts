@@ -27,6 +27,18 @@ export interface Position {
   openedAt: number | null;
 }
 
+/** Stable id of an open position: exchange, sub-account, market and side. */
+export const posKey = (p: Pick<Position, 'exchange' | 'sub' | 'symbol' | 'side'>) => `${p.exchange}|${p.sub ?? ''}|${p.symbol}|${p.side}`;
+
+/** A delta-neutral trade the user built from two open positions (keys from `posKey`). */
+export interface Pair { long: string; short: string }
+
+/** Rows of the positions table: a plain position, or a pair shown as one delta-neutral row (sums of both legs). */
+export type Leg = Position & { key: string };
+export type PositionRow =
+  | ({ kind: 'position' } & Leg)
+  | { kind: 'pair'; key: string; long: Leg; short: Leg; collateral: number; upnl: number; roe: number; funding: number; openedAt: number | null };
+
 /** One row per fill (or per closed position, when the exchange reports it that way). */
 export interface Trade {
   exchange: ExchangeId;

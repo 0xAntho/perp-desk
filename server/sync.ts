@@ -2,7 +2,7 @@
 // One failing exchange never blocks the others — it is just marked stale/error.
 // With a Store, history is persisted: a restart loads it and only fetches what came after.
 import type { Store } from './store.js';
-import type { Account, Adapter, ExchangeId, FundingPayment, Position, Trade } from './types.js';
+import { posKey, type Account, type Adapter, type ExchangeId, type FundingPayment, type Pair, type Position, type Trade } from './types.js';
 
 const LIVE_EVERY = 15_000;
 const HISTORY_EVERY = 60_000;
@@ -26,6 +26,7 @@ export interface ExchangeState {
 
 export class Sync {
   readonly states: ExchangeState[];
+  pairs: Pair[];
   private timers: NodeJS.Timeout[] = [];
   private inflight = new Map<string, Promise<void>>();
 
@@ -44,6 +45,7 @@ export class Sync {
         opened: stored ? store.opened(adapter.id) : new Map(),
       };
     });
+    this.pairs = store?.pairs() ?? [];
   }
 
   private persist(s: ExchangeState) { return this.store && !s.adapter.mock ? this.store : null; }
@@ -88,6 +90,7 @@ export class Sync {
         s.account = account;
         s.positions = positions;
         this.keepOpenTimes(s);
+        this.dropClosedPairs(s);
         this.persist(s)?.saveEquity(s.adapter.id, account.ts, account.equity);
         s.liveAt = Date.now();
         s.error = null;
@@ -142,6 +145,32 @@ export class Sync {
     }
     s.opened = next;
     this.persist(s)?.saveOpened(s.adapter.id, next);
+  }
+
+  /** Pairs two open positions (one long, one short) into a delta-neutral trade. Returns an error message, or null. */
+  pair(a: string, b: string): string | null {
+    const open = new Map(this.states.flatMap(s => s.positions).map(p => [posKey(p), p]));
+    const pa = open.get(a), pb = open.get(b);
+    if (!pa || !pb) return 'position not open';
+    if (pa.side === pb.side) return 'a pair needs one long and one short';
+    const p: Pair = pa.side === 'Long' ? { long: a, short: b } : { long: b, short: a };
+    if (this.pairs.some(x => [x.long, x.short].some(k => k === a || k === b))) return 'position already paired';
+    this.store?.savePair(p);
+    this.pairs.push(p);
+    return null;
+  }
+
+  unpair(long: string) {
+    this.store?.deletePair(long);
+    this.pairs = this.pairs.filter(p => p.long !== long);
+  }
+
+  /** A pair ends when one of its legs is no longer open (read fresh from that leg's exchange). */
+  private dropClosedPairs(s: ExchangeState) {
+    const open = new Set(s.positions.map(posKey));
+    const prefix = s.adapter.id + '|';
+    for (const p of [...this.pairs])
+      if ([p.long, p.short].some(k => k.startsWith(prefix) && !open.has(k))) this.unpair(p.long);
   }
 
   private fail(s: ExchangeState, e: unknown, what: string) {

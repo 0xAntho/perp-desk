@@ -30,7 +30,22 @@ export function createApp(sync: Sync, opts: AppOptions = {}) {
   api.get('/positions', c => {
     const states = pick(c.req.query('exchange'));
     if (!states) return c.json({ error: 'unknown exchange' }, 400);
-    return c.json(agg.positions(states));
+    return c.json(agg.positions(states, sync.pairs));
+  });
+
+  // delta-neutral pairs: a dashboard-side grouping of two open positions, nothing is sent to an exchange
+  api.post('/pairs', async c => {
+    const body = await c.req.json().catch(() => null) as { a?: unknown; b?: unknown } | null;
+    if (typeof body?.a !== 'string' || typeof body.b !== 'string') return c.json({ error: 'expected { a, b } position keys' }, 400);
+    const err = sync.pair(body.a, body.b);
+    return err ? c.json({ error: err }, 400) : c.json({ ok: true });
+  });
+
+  api.delete('/pairs', c => {
+    const key = c.req.query('key');
+    if (!key) return c.json({ error: 'expected ?key=' }, 400);
+    sync.unpair(key);
+    return c.json({ ok: true });
   });
 
   api.get('/pnl', c => {

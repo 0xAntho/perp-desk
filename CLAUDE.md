@@ -16,11 +16,11 @@ Personal multi-exchange perp trading dashboard (Hyperliquid, Perpl, Arcus, Exten
   - `adapters/arcus.ts` — real adapter (public REST by wallet address, subaccount 0; `ARCUS_ADDRESS`, defaults to `HL_ADDRESS`). Times are epoch µs. `closedPnl` is net of fee (added back for gross); no liq price (`null`). Pages by moving `to` to the oldest row.
   - `adapters/variational.ts` — no API yet (planned for 2026-11): history only, from `variational-csv.ts` + `import-variational.ts` (the trade CSV export). The export has fills only, so realized PnL is rebuilt by average cost per underlying; fee 0, no funding, balance $0, no positions. Replace with a real adapter when the API ships.
   - `adapters/mock.ts` — deterministic fake data, used for any exchange whose keys/address are missing from `.env` (shown with a "Mock" tag in the UI).
-  - `store.ts` — SQLite (`node:sqlite`, file `data/perp-desk.db`, git-ignored): trades, funding, open times of current positions, hourly equity snapshots (stored, not shown yet). Mock adapters are never stored.
+  - `store.ts` — SQLite (`node:sqlite`, file `data/perp-desk.db`, git-ignored): trades, funding, open times of current positions, hourly equity snapshots (stored, not shown yet), delta-neutral pairs (`pairs` table, added without a `SCHEMA` bump). Mock adapters are never stored.
   - `sync.ts` — positions/account every 15 s, trades/funding every 60 s. History is loaded from the store at start and resumes **per account** (`Trade.account`/`FundingPayment.account`: HL wallet, Extended account id, Perpl key hash, Arcus address) from its newest stored row; an account with nothing stored (first run, key or sub-account added later) gets everything the exchange still serves. Open times are kept across restarts (adapters only see fills since start). A failing exchange goes "stale"/"error" without blocking the others.
   - `hl-csv.ts` + `import-hl.ts` — one-time import of Hyperliquid's trade-history CSV export for fills older than the ~10k the API serves. Only rows older than the oldest API-fetched fill are added; ids are stable, so re-running changes nothing.
   - `aggregate.ts` — all derived numbers (PnL series, flows, top trades, activity). The frontend only renders.
-  - `app.ts` — routes under `/api` (summary, positions, pnl, trades/top, activity, refresh). Optional basic auth.
+  - `app.ts` — routes under `/api` (summary, positions, pnl, trades/top, activity, refresh, pairs). Optional basic auth.
   - `index.ts` — wires adapters from `.env`, binds to 127.0.0.1 by default.
 - `src/` — React + Vite + TanStack Query. One component per dashboard card in `src/components/`. `src/styles/dashboard.css` holds the dashboard layer and the dark theme.
 
@@ -40,6 +40,7 @@ Personal multi-exchange perp trading dashboard (Hyperliquid, Perpl, Arcus, Exten
 
 ## Conventions and decisions
 - Best/worst trades are ranked and shown net of the order's own fees (user's call, 2026-11-09). The PnL curve is still gross realized; fees and funding are shown separately, net in the KPI card. Ask before changing the curve.
+- Delta-neutral pairs (2026-11-09): the user drags a position onto the opposite leg (or taps the link button on both, for phones) to group one long + one short, on any exchanges/symbols. The DN row shows Σ margin as collateral, Σ uPnL, ROE on that, Σ funding since open (accumulated, not live rates: the user's call); it expands to the legs. Pairs live in SQLite and are dropped when a fresh positions read shows a leg closed. Purely a display grouping, nothing is sent to an exchange.
 - Use read-only exchange keys only. Keys live in `.env` (git-ignored); `.env.example` lists the variables.
 - Keep the UI faithful to the design file. Only the design's "Rail" layout is kept (the user removed Stacked and Bento); it and light/dark must keep working, including at phone width.
 - Code and comments in English. The user writes in French or English.

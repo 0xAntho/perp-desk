@@ -1,10 +1,10 @@
 // SQLite persistence (Implementation Plan §4): trade and funding history, open times of current
-// positions, hourly equity snapshots. Lets a restart resume from the last stored row instead of
+// positions, hourly equity snapshots, delta-neutral pairs. Lets a restart resume from the last stored row instead of
 // re-downloading everything, and keeps history the exchanges' APIs no longer serve.
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-import type { ExchangeId, FundingPayment, Side, Trade } from './types.js';
+import type { ExchangeId, FundingPayment, Pair, Side, Trade } from './types.js';
 
 export const DB_PATH = 'data/perp-desk.db';   // data/ is git-ignored
 const SCHEMA = 2;   // bump to rebuild: history is re-downloaded (and the Hyperliquid CSV must be re-imported)
@@ -40,6 +40,7 @@ export class Store {
         exchange TEXT NOT NULL, key TEXT NOT NULL, ts INTEGER NOT NULL, PRIMARY KEY (exchange, key));
       CREATE TABLE IF NOT EXISTS equity (
         exchange TEXT NOT NULL, ts INTEGER NOT NULL, equity REAL NOT NULL, PRIMARY KEY (exchange, ts));
+      CREATE TABLE IF NOT EXISTS pairs (long TEXT PRIMARY KEY, short TEXT NOT NULL UNIQUE);
     `);
   }
 
@@ -103,6 +104,15 @@ export class Store {
     const rows = this.db.prepare('SELECT ts, equity FROM equity WHERE exchange = ? ORDER BY ts').all(exchange) as { ts: number; equity: number }[];
     return rows.map(r => ({ ts: r.ts, equity: r.equity }));
   }
+
+  /** Delta-neutral pairs set by the user, as position keys (see `posKey`). */
+  pairs(): Pair[] {
+    return (this.db.prepare('SELECT long, short FROM pairs').all() as unknown as Pair[]).map(r => ({ long: r.long, short: r.short }));
+  }
+
+  savePair(p: Pair) { this.db.prepare('INSERT INTO pairs VALUES (?, ?)').run(p.long, p.short); }
+
+  deletePair(long: string) { this.db.prepare('DELETE FROM pairs WHERE long = ?').run(long); }
 
   close() { this.db.close(); }
 }
