@@ -99,10 +99,13 @@ export function pnl(states: ExchangeState[], range: Range, now = Date.now()) {
 
 export function topTrades(states: ExchangeState[], range: Range, n = 5, now = Date.now()) {
   const from = rangeStart(states, range, now);
-  const trades = orders(states.flatMap(s => [...s.trades.values()]).filter(t => t.ts > from && t.ts <= now));
+  // ranked and shown net of the order's own fees; orders that closed nothing (openings) aren't trade results
+  const trades = orders(states.flatMap(s => [...s.trades.values()]).filter(t => t.ts > from && t.ts <= now))
+    .filter(t => t.realizedPnl !== 0)
+    .map(t => ({ ...t, net: t.realizedPnl - t.fee }));
   return {
-    best: trades.filter(t => t.realizedPnl > 0).sort((a, b) => b.realizedPnl - a.realizedPnl).slice(0, n),
-    worst: trades.filter(t => t.realizedPnl < 0).sort((a, b) => a.realizedPnl - b.realizedPnl).slice(0, n),
+    best: trades.filter(t => t.net > 0).sort((a, b) => b.net - a.net).slice(0, n),
+    worst: trades.filter(t => t.net < 0).sort((a, b) => a.net - b.net).slice(0, n),
   };
 }
 

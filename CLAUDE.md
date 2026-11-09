@@ -39,7 +39,7 @@ Personal multi-exchange perp trading dashboard (Hyperliquid, Perpl, Arcus, Exten
 3. Optional: push live marks/uPnL over SSE instead of 15 s polling (plan §6.4).
 
 ## Conventions and decisions
-- Realized PnL is gross in the curve and top-trade lists; fees and funding shown separately, net in the KPI card. The user hasn't confirmed this; ask before changing.
+- Best/worst trades are ranked and shown net of the order's own fees (user's call, 2026-11-09). The PnL curve is still gross realized; fees and funding are shown separately, net in the KPI card. Ask before changing the curve.
 - Use read-only exchange keys only. Keys live in `.env` (git-ignored); `.env.example` lists the variables.
 - Keep the UI faithful to the design file. Only the design's "Rail" layout is kept (the user removed Stacked and Bento); it and light/dark must keep working, including at phone width.
 - Code and comments in English. The user writes in French or English.

@@ -17,7 +17,8 @@ export interface Pnl {
   series: { id: ExchangeId; name: string; vals: number[] }[];
   flows: { gross: number; fees: number; funding: number; net: number };
 }
-export interface TopTrades { best: Trade[]; worst: Trade[] }
+export type TopTrade = Trade & { net: number };   // realized PnL minus the order's fees
+export interface TopTrades { best: TopTrade[]; worst: TopTrade[] }
 export interface ActivityDay { date: string; count: number }
 
 async function get<T>(path: string, params: Record<string, string | number>): Promise<T> {

@@ -139,14 +139,17 @@ test('aggregate: fills of one order count once in top trades and activity; All s
   st.saveTrades([
     trade('f1', now - 400 * 24 * H, 10, '0xo'), trade('f2', now - 400 * 24 * H + 1, 15, '0xo'),
     trade('f3', now - 2 * H, 20), trade('f4', now - 3 * H, -4, '0xp'),
+    trade('f5', now - 5 * H, 0.5),   // gross win smaller than its fee: a net loss
+    trade('f6', now - 6 * H, 0),     // opening order: fee only, not a trade result
   ]);
   const sync = new Sync([fake([]).ad], quiet, st);
   const top = agg.topTrades(sync.states, 'All', 5, now);
-  assert.deepEqual(top.best.map(t => [t.id, t.realizedPnl, t.fee]), [['f1', 25, 2], ['f3', 20, 1]]);
-  assert.deepEqual(top.worst.map(t => t.id), ['f4']);
+  // ranked and shown net of the order's fees (fee is 1 per fill)
+  assert.deepEqual(top.best.map(t => [t.id, t.realizedPnl, t.fee, t.net]), [['f1', 25, 2, 23], ['f3', 20, 1, 19]]);
+  assert.deepEqual(top.worst.map(t => [t.id, t.net]), [['f4', -5], ['f5', -0.5]]);
   const curve = agg.pnl(sync.states, 'All', now);
   assert.equal(curve.from, now - 400 * 24 * H - 1);
-  assert.equal(curve.flows.gross, 41);
+  assert.equal(curve.flows.gross, 41.5);
   const days = agg.activity(sync.states, 60, 'UTC', now);
-  assert.equal(days.reduce((s, d) => s + d.count, 0), 4 - 1);
+  assert.equal(days.reduce((s, d) => s + d.count, 0), 6 - 1);
 });

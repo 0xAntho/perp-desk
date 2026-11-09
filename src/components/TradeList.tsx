@@ -1,8 +1,8 @@
-import type { Trade } from '../api';
+import type { TopTrade } from '../api';
 import { date, market, usd } from '../format';
 import { Skel } from './Kpis';
 
-interface Props { kind: 'best' | 'worst'; trades?: Trade[]; rangeLabel: string; isAll: boolean; names: Record<string, string> }
+interface Props { kind: 'best' | 'worst'; trades?: TopTrade[]; rangeLabel: string; isAll: boolean; names: Record<string, string> }
 
 export function TradeList({ kind, trades, rangeLabel, isAll, names }: Props) {
   const best = kind === 'best';
@@ -23,7 +23,7 @@ export function TradeList({ kind, trades, rangeLabel, isAll, names }: Props) {
               <span className="trade-sym">{m.coin}-PERP<span className={`tag ${tr.side === 'Long' ? 'tag-accent-2' : 'tag-accent'}`}>{tr.side}</span></span>
               <span className="trade-meta">{[isAll && names[tr.exchange], m.dex, tr.sub, date(tr.ts, true)].filter(Boolean).join(' · ')}</span>
             </div>
-            <span className={`trade-pnl num ${t}`}>{usd(tr.realizedPnl, true)}</span>
+            <span className={`trade-pnl num ${t}`}>{usd(tr.net, true)}</span>
           </div>
         );
       })}
