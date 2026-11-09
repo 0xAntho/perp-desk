@@ -34,7 +34,7 @@ Personal multi-exchange perp trading dashboard (Hyperliquid, Perpl, Arcus, Exten
 - Node 24+ (`node:sqlite` needs 22.5+).
 
 ## Status and next steps
-1. All four exchanges run on live data (checked 2026-11-03). Perpl totals match its own all-time stats; Arcus matches its documented invariant (Σ closedPnl + Σ funding = netQuoteBalance − net deposits). Each adapter has a fixture test (`server/<exchange>.test.ts`).
+1. All four exchanges run on live data (checked 2026-11-03). Perpl totals match its own all-time stats; Arcus matches its documented invariant (Σ closedPnl + Σ funding = netQuoteBalance − net deposits). Hyperliquid is ~$155 below its own `portfolio` perpAllTime, accepted by the user (2026-11-09): ~$7 predates any reachable fill (before 2025-04-08), ~$150 comes from intervals with trades on the USDH-collateral HIP-3 dexes (vntl, flx, km), mechanism unknown; every other interval reconciles to the cent. Each adapter has a fixture test (`server/<exchange>.test.ts`).
 2. SQLite history done (2026-11-04); older Hyperliquid fills come from the CSV import. Changing the schema: bump `SCHEMA` in `store.ts` (the database is rebuilt and re-downloaded; re-run the CSV imports, Hyperliquid and Variational).
 3. Optional: push live marks/uPnL over SSE instead of 15 s polling (plan §6.4).
 

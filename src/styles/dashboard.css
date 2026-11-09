@@ -151,7 +151,17 @@ html:has(.dash[data-theme="dark"]) { background: #1d1a16; color-scheme: dark; }
 .empty { font-size: 13px; margin: var(--space-2) 0; }
 
 /* positions */
-.table-wrap { overflow-x: auto; margin: 0 calc(var(--space-2) * -1); }
+.table-wrap {
+  overflow-x: auto; margin: 0 calc(var(--space-2) * -1);
+  /* scroll hint: an edge shadow wherever columns are hidden; the surface-colored covers scroll with the
+     content (local) and hide each shadow once that end is reached */
+  --edge: color-mix(in srgb, var(--color-text) 35%, transparent);
+  background:
+    linear-gradient(to right, var(--color-surface) 40%, transparent) left / 32px 100% no-repeat local,
+    linear-gradient(to left, var(--color-surface) 40%, transparent) right / 32px 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, var(--edge), transparent) left / 20px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, var(--edge), transparent) right / 20px 100% no-repeat scroll;
+}
 .positions { min-width: 1180px; font-size: 13px; }
 .positions .r { text-align: right; }
 .positions .nowrap { white-space: nowrap; }
