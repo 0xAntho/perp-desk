@@ -1,15 +1,12 @@
 // Extended adapter: REST API with a read-only API key (X-Api-Key header, no signing for reads).
 // One API key = one Extended sub-account; several keys are merged into one exchange in the UI.
 import type { Account, Adapter, FundingPayment, Position, Side, Since, Trade } from '../types.js';
+import { symbolOf, type Fetch, type Json } from './http.js';
 
 const API = 'https://api.starknet.extended.exchange/api/v1';
 const PAGE = 1000;
 const MAX_PAGES = 50;
 
-type Fetch = typeof fetch;
-type Json = any; // eslint-disable-line @typescript-eslint/no-explicit-any
-
-const symbolOf = (market: string) => market.replace(/-USD$/, '');
 const sideOf = (s: string): Side => (s.toUpperCase() === 'SHORT' ? 'Short' : 'Long');
 
 export class ExtendedAdapter implements Adapter {

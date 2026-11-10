@@ -2,13 +2,11 @@
 // One failing exchange never blocks the others — it is just marked stale/error.
 // With a Store, history is persisted: a restart loads it and only fetches what came after.
 import type { Store } from './store.js';
-import { posKey, type Account, type Adapter, type ExchangeId, type FundingPayment, type Pair, type Position, type Trade } from './types.js';
+import { posKey, type Account, type Adapter, type ExchangeId, type FundingPayment, type Pair, type Position, type Status, type Trade } from './types.js';
 
 const LIVE_EVERY = 15_000;
 const HISTORY_EVERY = 60_000;
 const OVERLAP = 5 * 60e3; // re-read the last few minutes of history to catch late fills
-
-export type Status = 'loading' | 'live' | 'stale' | 'error';
 
 export interface ExchangeState {
   adapter: Adapter;

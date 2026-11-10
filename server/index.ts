@@ -25,7 +25,6 @@ if (env.HL_ADDRESS) {
   console.warn('HL_ADDRESS not set: Hyperliquid runs on mock data. Add it to .env.');
   adapters.push(new MockAdapter('hyperliquid', 'Hyperliquid', 48210, 7, 11, { symbols: 8 }));
 }
-// Not wired up yet — swap each for a real adapter (Plan §3, §8).
 if (env.PERPL_API_KEY && env.PERPL_API_KEY_SECRET) {
   adapters.push(new PerplAdapter(env.PERPL_API_KEY, env.PERPL_API_KEY_SECRET, 'read-only key'));
 } else {

@@ -16,6 +16,9 @@ const WIDE: Col[] = ['symbol', 'side', 'size', 'entry', 'mark', 'liq', 'lev', 'm
 // when the card can't show every column (e.g. Rail), bring PnL next to the symbol instead of scrolled away
 const NARROW: Col[] = ['symbol', 'side', 'upnl', 'roe', 'size', 'entry', 'mark', 'liq', 'lev', 'margin', 'funding', 'opened'];
 
+const roeCell = (roe: number, upnl: number) => <td key="roe" className={`r ${tone(upnl)}`}>{(roe >= 0 ? '+' : '−') + Math.abs(roe * 100).toFixed(2)}%</td>;
+const openedCell = (t: number | null) => <td key="opened" className="r nowrap muted">{t ? date(t, true) : '—'}</td>;
+
 function cells(p: Position): Record<Col, ReactNode> {
   const m = market(p.symbol);
   return {
@@ -28,9 +31,9 @@ function cells(p: Position): Record<Col, ReactNode> {
     lev: <td key="lev" className="r">{p.leverage}×</td>,
     margin: <td key="margin" className="r">{usd(p.margin)}</td>,
     upnl: <td key="upnl" className={`r ${tone(p.upnl)}`} style={{ fontWeight: 600 }}>{usd(p.upnl, true)}</td>,
-    roe: <td key="roe" className={`r ${tone(p.upnl)}`}>{(p.roe >= 0 ? '+' : '−') + Math.abs(p.roe * 100).toFixed(2)}%</td>,
+    roe: roeCell(p.roe, p.upnl),
     funding: <td key="funding" className={`r ${tone(p.funding)}`}>{usd(p.funding, true)}</td>,
-    opened: <td key="opened" className="r nowrap muted">{p.openedAt ? date(p.openedAt, true) : '—'}</td>,
+    opened: openedCell(p.openedAt),
   };
 }
 
@@ -46,9 +49,9 @@ function pairCells(r: PairRow, open: boolean): Record<Col, ReactNode> {
     size: none('size'), entry: none('entry'), mark: none('mark'), liq: none('liq'), lev: none('lev'),
     margin: <td key="margin" className="r" title="Total collateral of both legs">{usd(r.collateral)}</td>,
     upnl: <td key="upnl" className={`r ${tone(r.upnl)}`} style={{ fontWeight: 600 }}>{usd(r.upnl, true)}</td>,
-    roe: <td key="roe" className={`r ${tone(r.upnl)}`}>{(r.roe >= 0 ? '+' : '−') + Math.abs(r.roe * 100).toFixed(2)}%</td>,
+    roe: roeCell(r.roe, r.upnl),
     funding: <td key="funding" className={`r ${tone(r.funding)}`} title="Net funding since open: long leg + short leg">{usd(r.funding, true)}</td>,
-    opened: <td key="opened" className="r nowrap muted">{r.openedAt ? date(r.openedAt, true) : '—'}</td>,
+    opened: openedCell(r.openedAt),
   };
 }
 

@@ -7,7 +7,7 @@ import { DatabaseSync } from 'node:sqlite';
 import type { ExchangeId, FundingPayment, Pair, Side, Trade } from './types.js';
 
 export const DB_PATH = 'data/perp-desk.db';   // data/ is git-ignored
-const SCHEMA = 2;   // bump to rebuild: history is re-downloaded (and the Hyperliquid CSV must be re-imported)
+const SCHEMA = 2;   // bump to rebuild: history is re-downloaded (and the Hyperliquid and Variational CSVs must be re-imported)
 
 interface TradeRow {
   exchange: ExchangeId; account: string; id: string; sub: string | null; symbol: string; side: Side;
@@ -23,7 +23,7 @@ export class Store {
     const { user_version: version } = this.db.prepare('PRAGMA user_version').get() as { user_version: number };
     if (version !== SCHEMA) {
       const old = this.db.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all() as { name: string }[];
-      if (old.length) console.warn(`[store] database schema ${version} → ${SCHEMA}: rebuilt, history will be re-downloaded. Re-run \`npm run import:hl\` for Hyperliquid fills older than the API serves.`);
+      if (old.length) console.warn(`[store] database schema ${version} → ${SCHEMA}: rebuilt, history will be re-downloaded. Re-run \`npm run import:hl\` (Hyperliquid fills older than the API serves) and \`npm run import:variational\`.`);
       for (const t of old) this.db.exec(`DROP TABLE "${t.name}"`);
       this.db.exec(`PRAGMA user_version = ${SCHEMA}`);
     }

@@ -2,6 +2,9 @@
 
 export type ExchangeId = 'hyperliquid' | 'perpl' | 'arcus' | 'extended' | 'variational';
 export type Side = 'Long' | 'Short';
+export type Range = '24h' | '7D' | '30D' | 'All';
+/** Sync state of one exchange: 'stale' keeps the last good data after a failed refresh. */
+export type Status = 'loading' | 'live' | 'stale' | 'error';
 
 export interface Account {
   exchange: ExchangeId;

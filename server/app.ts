@@ -1,8 +1,8 @@
 // HTTP API (Implementation Plan §5).
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import { basicAuth } from 'hono/basic-auth';
 import * as agg from './aggregate.js';
-import type { Sync } from './sync.js';
+import type { ExchangeState, Sync } from './sync.js';
 
 export interface AppOptions { auth?: { username: string; password: string } }
 
@@ -10,28 +10,23 @@ export function createApp(sync: Sync, opts: AppOptions = {}) {
   const app = new Hono();
   if (opts.auth) app.use('*', basicAuth(opts.auth));
 
-  const pick = (exchange: string | undefined) => {
-    if (!exchange || exchange === 'all') return sync.states;
-    const s = sync.states.filter(x => x.adapter.id === exchange);
-    return s.length ? s : null;
+  /** Handler over the states picked by `?exchange=` (absent or 'all' = every exchange); 400 on an unknown id. */
+  const read = (fn: (c: Context, states: ExchangeState[]) => Response) => (c: Context) => {
+    const exchange = c.req.query('exchange');
+    const states = !exchange || exchange === 'all' ? sync.states : sync.states.filter(x => x.adapter.id === exchange);
+    return states.length ? fn(c, states) : c.json({ error: 'unknown exchange' }, 400);
   };
-  const range = (r: string | undefined): agg.Range => (agg.isRange(r) ? r : '7D');
+  const range = (c: Context): agg.Range => { const r = c.req.query('range'); return agg.isRange(r) ? r : '7D'; };
 
   const api = new Hono();
 
-  api.get('/summary', c => {
-    const states = pick(c.req.query('exchange'));
-    if (!states) return c.json({ error: 'unknown exchange' }, 400);
+  api.get('/summary', read((c, states) => {
     const sel = agg.summary(states);
     const all = agg.summary(sync.states);
     return c.json({ balance: sel.balance, upnl: sel.upnl, updatedAt: all.updatedAt, exchanges: all.exchanges });
-  });
+  }));
 
-  api.get('/positions', c => {
-    const states = pick(c.req.query('exchange'));
-    if (!states) return c.json({ error: 'unknown exchange' }, 400);
-    return c.json(agg.positions(states, sync.pairs));
-  });
+  api.get('/positions', read((c, states) => c.json(agg.positions(states, sync.pairs))));
 
   // delta-neutral pairs: a dashboard-side grouping of two open positions, nothing is sent to an exchange
   api.post('/pairs', async c => {
@@ -48,25 +43,17 @@ export function createApp(sync: Sync, opts: AppOptions = {}) {
     return c.json({ ok: true });
   });
 
-  api.get('/pnl', c => {
-    const states = pick(c.req.query('exchange'));
-    if (!states) return c.json({ error: 'unknown exchange' }, 400);
-    return c.json(agg.pnl(states, range(c.req.query('range'))));
-  });
+  api.get('/pnl', read((c, states) => c.json(agg.pnl(states, range(c)))));
 
-  api.get('/trades/top', c => {
-    const states = pick(c.req.query('exchange'));
-    if (!states) return c.json({ error: 'unknown exchange' }, 400);
+  api.get('/trades/top', read((c, states) => {
     const n = Math.max(1, Math.min(50, Number(c.req.query('n')) || 5));
-    return c.json(agg.topTrades(states, range(c.req.query('range')), n));
-  });
+    return c.json(agg.topTrades(states, range(c), n));
+  }));
 
-  api.get('/activity', c => {
-    const states = pick(c.req.query('exchange'));
-    if (!states) return c.json({ error: 'unknown exchange' }, 400);
+  api.get('/activity', read((c, states) => {
     const weeks = Math.max(1, Math.min(52, Number(c.req.query('weeks')) || 26));
     return c.json(agg.activity(states, weeks, c.req.query('tz') || 'UTC'));
-  });
+  }));
 
   api.post('/refresh', async c => {
     await sync.refreshAll();

@@ -1,5 +1,4 @@
-// Mock adapter: deterministic fake history for exchanges not wired up yet.
-// Replace with a real adapter (same Adapter interface) — see Implementation Plan §3.
+// Mock adapter: deterministic fake history, used for an exchange whose keys/address are missing from .env.
 import type { Account, Adapter, ExchangeId, FundingPayment, Position, Since, Trade } from '../types.js';
 
 const PRICES: Record<string, number> = {

@@ -1,14 +1,14 @@
 // Pure aggregation over the synced state. The frontend only renders what comes out of here.
 import type { ExchangeState } from './sync.js';
-import { posKey, type Leg, type Pair, type PositionRow, type Trade } from './types.js';
+import { posKey, type Leg, type Pair, type PositionRow, type Range, type Trade } from './types.js';
 
 export const RANGES = {
   '24h': { hours: 24, step: 1 },
   '7D': { hours: 168, step: 2 },
   '30D': { hours: 720, step: 6 },
   All: { hours: null, step: 24 },   // since the oldest stored trade or funding payment
-} as const;
-export type Range = keyof typeof RANGES;
+} as const satisfies Record<Range, { hours: number | null; step: number }>;
+export type { Range };
 export const isRange = (r: unknown): r is Range => typeof r === 'string' && r in RANGES;
 
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);

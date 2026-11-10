@@ -2,6 +2,7 @@
 // Prices, sizes and amounts come as scaled integers: decimals are in /v1/pub/context.
 import { createHash, createPrivateKey, randomBytes, sign, type KeyObject } from 'node:crypto';
 import type { Account, Adapter, FundingPayment, Position, Since, Trade } from '../types.js';
+import { fetchRetry, sleep, type Fetch, type Json } from './http.js';
 
 const API = 'https://app.perpl.xyz/api';
 const CHAIN_ID = 143;          // Monad mainnet
@@ -9,16 +10,10 @@ const CONTEXT_TTL = 10 * 60e3;
 const PAGE = 100;              // server max
 const MAX_PAGES = 500;
 const PAGE_GAP = 250;          // ms between history pages: REST limits are unpublished, 429 is the signal
-const RETRIES = 5;
-
-const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
 // PositionStatusReason values that take size off a position and realize PnL
 const EXITS = new Set([13, 14, 15, 19, 22]);   // closed, decreased, deleveraged, liquidated, unwound
 const OPENS = new Set([18, 21]);                // inverted, opened
-
-type Fetch = typeof fetch;
-type Json = any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 interface Market { symbol: string; px: number; sz: number }
 interface Context { markets: Map<number, Market>; amount: number }
@@ -48,17 +43,11 @@ export class PerplAdapter implements Adapter {
     this.account = 'key:' + createHash('sha256').update(apiKey).digest('hex').slice(0, 12);
   }
 
-  /** GET with exponential backoff on 429 (1 s, 2 s, 4 s…, or the server's Retry-After). */
+  /** GET with backoff on 429; signed requests get fresh signature headers on every attempt (nonces are single-use). */
   private async get(target: string, signed = true): Promise<Json> {
-    for (let i = 0; ; i++) {
-      const r = await this.fetchImpl(API + target, { headers: signed ? this.sign(target) : {}, signal: AbortSignal.timeout(15_000) });
-      if (r.status === 429 && i < RETRIES) {
-        await sleep((Number(r.headers.get('retry-after')) || 2 ** i) * 1000);
-        continue;
-      }
-      if (!r.ok) throw new Error(`Perpl API ${r.status} on ${target.split('?')[0]}`);
-      return r.json();
-    }
+    const r = await fetchRetry(this.fetchImpl, API + target, () => ({ headers: signed ? this.sign(target) : {} }));
+    if (!r.ok) throw new Error(`Perpl API ${r.status} on ${target.split('?')[0]}`);
+    return r.json();
   }
 
   /** Signature headers: fresh timestamp and nonce on every attempt (nonces are single-use). */
@@ -177,8 +166,8 @@ export class PerplAdapter implements Adapter {
         exchange: this.id,
         account: this.account,
         sub: this.sub(p.acc),
-        id: `${p.acc}:${p.pid}:${p.at?.b}:${p.at?.tx}:${p.at?.l}`,
-        symbol: ctx.markets.get(p.mkt)?.symbol ?? `#${p.mkt}`,
+        id: eventId(p),
+        symbol: symbolIn(ctx, p.mkt),
         side: p.sd === 2 ? 'Short' : 'Long',
         realizedPnl: +p.dpnl / ctx.amount,     // gross: (exit − entry) × size
         fee: +(p.fee ?? 0) / ctx.amount,       // entry share released + close fee
@@ -194,11 +183,14 @@ export class PerplAdapter implements Adapter {
       .map(p => ({
         exchange: this.id,
         account: this.account,
-        id: `${p.acc}:${p.pid}:${p.at?.b}:${p.at?.tx}:${p.at?.l}`,
-        symbol: ctx.markets.get(p.mkt)?.symbol ?? `#${p.mkt}`,
+        id: eventId(p),
+        symbol: symbolIn(ctx, p.mkt),
         usdc: +p.fnd / ctx.amount,
         ts: p.at.t,
       }));
   }
-
 }
+
+/** One position-history event: account, position, block, transaction and log index. */
+const eventId = (p: Json) => `${p.acc}:${p.pid}:${p.at?.b}:${p.at?.tx}:${p.at?.l}`;
+const symbolIn = (ctx: Context, mkt: number) => ctx.markets.get(mkt)?.symbol ?? `#${mkt}`;

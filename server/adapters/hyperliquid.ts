@@ -1,12 +1,10 @@
 // Hyperliquid adapter: public info API, read by wallet address — no keys needed.
 // Sub-accounts of the main wallet are discovered and included automatically.
 import type { Account, Adapter, FundingPayment, Position, Side, Since, Trade } from '../types.js';
+import { wallet, type Fetch, type Json } from './http.js';
 
 const API = 'https://api.hyperliquid.xyz/info';
 const SUBS_TTL = 10 * 60e3;
-
-type Fetch = typeof fetch;
-type Json = any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 interface Fill {
   coin: string; px: string; sz: string; side: 'B' | 'A'; time: number;
@@ -34,10 +32,7 @@ export class HyperliquidAdapter implements Adapter {
   private dexsAt = 0;
 
   constructor(address: string, private readonly fetchImpl: Fetch = fetch) {
-    const a = address.trim().toLowerCase();
-    if (!/^0x[0-9a-f]{40}$/.test(a)) throw new Error('HL_ADDRESS is not a valid 0x wallet address');
-    this.main = a;
-    this.label = a.slice(0, 6) + '…' + a.slice(-4);
+    ({ address: this.main, label: this.label } = wallet(address, 'HL_ADDRESS'));
   }
 
   private async post(body: Json): Promise<Json> {

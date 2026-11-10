@@ -1,11 +1,9 @@
 // Backend client + TanStack Query hooks (Implementation Plan §6).
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
-import type { ExchangeId, Leg, Position, PositionRow, Trade } from '../server/types';
+import type { ExchangeId, Leg, Position, PositionRow, Range, Status, Trade } from '../server/types';
 
-export type { ExchangeId, Leg, Position, PositionRow, Trade };
+export type { ExchangeId, Leg, Position, PositionRow, Range, Status, Trade };
 export type Tab = 'all' | ExchangeId;
-export type Range = '24h' | '7D' | '30D' | 'All';
-export type Status = 'loading' | 'live' | 'stale' | 'error';
 
 export interface ExchangeSummary {
   id: ExchangeId; name: string; label: string; mock: boolean; status: Status; error: string | null;

@@ -1,19 +1,14 @@
 // Arcus adapter: public REST reads by wallet address — no key needed. Reads subaccount 0 (accountIndex default).
 // History timestamps are epoch microseconds; the dashboard works in milliseconds.
 import type { Account, Adapter, FundingPayment, Position, Side, Since, Trade } from '../types.js';
+import { fetchRetry, symbolOf, wallet, type Fetch, type Json } from './http.js';
 
 const API = 'https://api.arcus.xyz/v1';
 const PAGE = 1000;             // server max for fills and funding
 const MAX_PAGES = 200;
-const RETRIES = 5;
-
-type Fetch = typeof fetch;
-type Json = any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 interface Fill { tradeId: string; marketDisplayName: string; side: 'BUY' | 'SELL'; size: string; fee: string; closedPnl: string; positionEffect: string; createdAt: number; liquidation?: { method: string } }
 
-const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
-const symbolOf = (market: string) => market.replace(/-USD$/, '');
 // OPEN_SHORT, ADD_LONG, CLOSE_SHORT…; a flip reports the side it closed (FLIP_SHORT_TO_LONG → Short)
 const sideOf = (effect: string): Side => (/LONG|SHORT/.exec(effect)?.[0] === 'SHORT' ? 'Short' : 'Long');
 
@@ -27,25 +22,16 @@ export class ArcusAdapter implements Adapter {
   private fills = new Map<string, Fill>();
 
   constructor(address: string, private readonly fetchImpl: Fetch = fetch) {
-    const a = address.trim().toLowerCase();
-    if (!/^0x[0-9a-f]{40}$/.test(a)) throw new Error('ARCUS_ADDRESS is not a valid 0x wallet address');
-    this.address = a;
-    this.label = a.slice(0, 6) + '…' + a.slice(-4);
+    ({ address: this.address, label: this.label } = wallet(address, 'ARCUS_ADDRESS'));
   }
 
   /** GET with backoff on 429: Arcus sends Retry-After (whole seconds) when the per-IP weight bucket is empty. */
   private async get(path: string, query: Record<string, string | number> = {}): Promise<Json> {
     const qs = new URLSearchParams({ address: this.address, ...Object.fromEntries(Object.entries(query).map(([k, v]) => [k, String(v)])) });
-    for (let i = 0; ; i++) {
-      const r = await this.fetchImpl(`${API}${path}?${qs}`, { signal: AbortSignal.timeout(15_000) });
-      if (r.status === 429 && i < RETRIES) {
-        await sleep((Number(r.headers.get('retry-after')) || 2 ** i) * 1000);
-        continue;
-      }
-      if (r.status === 404) return null;   // "this account has no activity yet"
-      if (!r.ok) throw new Error(`Arcus API ${r.status} on ${path}`);
-      return r.json();
-    }
+    const r = await fetchRetry(this.fetchImpl, `${API}${path}?${qs}`);
+    if (r.status === 404) return null;   // "this account has no activity yet"
+    if (!r.ok) throw new Error(`Arcus API ${r.status} on ${path}`);
+    return r.json();
   }
 
   /** Newest-first list bounded by from/to (µs, both inclusive): page by moving `to` to the oldest row seen. */
