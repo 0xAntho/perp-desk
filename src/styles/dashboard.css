@@ -191,4 +191,5 @@ html:has(.dash[data-theme="dark"]) { background: #1d1a16; color-scheme: dark; }
   .page { padding: var(--space-3) var(--space-4) var(--space-6); }
   .panel { padding: var(--space-4); }
   .titlebar h1 { font-size: 32px; }
+  .topbar .updated { order: 1; flex-basis: 100%; }   /* own line, so brand + both buttons fit on one */
 }

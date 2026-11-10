@@ -4,6 +4,7 @@ import { EXCHANGE_COLOR, RANGE_TEXT, compact, date, tone, usd } from '../format'
 import { Skel } from './Kpis';
 
 const W = 1000, H = 260;
+const niceStep = (v: number) => { const p = 10 ** Math.floor(Math.log10(v)); return [1, 2, 5, 10].map(m => m * p).find(x => x >= v)!; };
 
 export function PnlChart({ pnl, isAll, range }: { pnl?: Pnl; isAll: boolean; range: Range }) {
   const [hidden, setHidden] = useState<Record<string, boolean>>({});
@@ -23,6 +24,13 @@ export function PnlChart({ pnl, isAll, range }: { pnl?: Pnl; isAll: boolean; ran
   for (const s of visible) for (const v of s.vals) { if (v < mn) mn = v; if (v > mx) mx = v; }
   if (mx === mn) mx = mn + 1;
   const pad = (mx - mn) * 0.08; mn -= pad; mx += pad;
+  // snap the axis to 3 round steps (1, 2 or 5 × 10ⁿ, at least $1) so the 4 labels are distinct round values
+  let s = Math.max(1, niceStep((mx - mn) / 3));
+  for (;;) {
+    const top = Math.ceil(mx / s) * s;
+    if (top - 3 * s <= mn) { mx = top; mn = top - 3 * s; break; }
+    s = niceStep(s * 1.01);
+  }
   const y = (v: number) => H - ((v - mn) / (mx - mn)) * H;
   const x = (i: number) => (N > 1 ? (i / (N - 1)) * W : 0);
   const line = (vals: number[]) => vals.map((v, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1)).join('');
