@@ -97,17 +97,24 @@ export function pnl(states: ExchangeState[], range: Range, now = Date.now()) {
   for (let t = from; t < now; t += step * 3600e3) points.push(t);
   points.push(now);
 
+  // the curve is net: each trade adds its realized PnL minus its fee, each funding payment its amount
   const series = states.map(s => {
-    const trades = [...s.trades.values()].filter(t => t.ts > from && t.ts <= now).sort((a, b) => a.ts - b.ts);
+    const trades = [...s.trades.values()].filter(t => t.ts > from && t.ts <= now);
+    const payments = [...s.funding.values()].filter(f => f.ts > from && f.ts <= now);
+    const events = [
+      ...trades.map(t => ({ ts: t.ts, v: t.realizedPnl - t.fee })),
+      ...payments.map(f => ({ ts: f.ts, v: f.usdc })),
+    ].sort((a, b) => a.ts - b.ts);
     const vals: number[] = [];
     let acc = 0, i = 0;
     for (const p of points) {
-      while (i < trades.length && trades[i].ts <= p) acc += trades[i++].realizedPnl;
+      while (i < events.length && events[i].ts <= p) acc += events[i++].v;
       vals.push(acc);
     }
+    const realized = sum(trades.map(t => t.realizedPnl));
     const fees = sum(trades.map(t => t.fee));
-    const funding = sum([...s.funding.values()].filter(f => f.ts > from && f.ts <= now).map(f => f.usdc));
-    return { id: s.adapter.id, name: s.adapter.name, vals, realized: acc, fees, funding };
+    const funding = sum(payments.map(f => f.usdc));
+    return { id: s.adapter.id, name: s.adapter.name, vals, realized, fees, funding };
   });
 
   const gross = sum(series.map(x => x.realized));

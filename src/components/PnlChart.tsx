@@ -36,7 +36,7 @@ export function PnlChart({ pnl, isAll, range }: { pnl?: Pnl; isAll: boolean; ran
 
   const k = hover == null ? null : Math.min(N - 1, hover);
   const pct = k == null || N < 2 ? 0 : (k / (N - 1)) * 100;
-  const headline = pnl?.flows.gross ?? 0;
+  const headline = pnl?.flows.net ?? 0;
 
   return (
     <section className="card elev-sm panel curve-panel" style={{ gridArea: 'curve' }}>
@@ -57,7 +57,7 @@ export function PnlChart({ pnl, isAll, range }: { pnl?: Pnl; isAll: boolean; ran
       </div>
       <div className="chart-headline">
         <span className={`num ${tone(headline)}`}>{pnl ? usd(headline, true) : <Skel w={140} />}</span>
-        <span>realized over {RANGE_TEXT[range][1]}</span>
+        <span>net over {RANGE_TEXT[range][1]}</span>
       </div>
       <div className="chart">
         <div className="chart-y num">{yTicks.map((t, i) => <span key={i}>{pnl ? t : ''}</span>)}</div>
@@ -74,7 +74,7 @@ export function PnlChart({ pnl, isAll, range }: { pnl?: Pnl; isAll: boolean; ran
             onMouseLeave={() => setHover(null)}
           >
             {pnl ? (
-              <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img" aria-label={`Cumulative realized PnL over ${RANGE_TEXT[range][1]}`}>
+              <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img" aria-label={`Cumulative net PnL over ${RANGE_TEXT[range][1]}`}>
                 <line x1={0} x2={W} y1={y0} y2={y0} style={{ stroke: 'var(--color-divider)', strokeWidth: 1.5, strokeDasharray: '5 5', vectorEffect: 'non-scaling-stroke' }} />
                 {visible[0] && <path d={line(visible[0].vals) + `L${W} ${y0}L0 ${y0}Z`} style={{ fill: visible[0].color, opacity: 0.08 }} />}
                 {visible.slice().reverse().map(s => (

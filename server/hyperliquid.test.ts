@@ -95,7 +95,7 @@ test('normalizes account, positions, fills and funding across sub-accounts', asy
   assert.equal(p.flows.fees, -7);
   assert.equal(p.flows.funding, -3);
   assert.equal(p.flows.net, 160);
-  assert.equal(p.series[0].vals.at(-1), 170);
+  assert.equal(p.series[0].vals.at(-1), 160, 'the curve ends at net (gross − fees + funding)');
 
   const top = agg.topTrades(sync.states, '24h');
   assert.equal(top.best[0].realizedPnl, 250);

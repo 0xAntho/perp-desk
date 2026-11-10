@@ -150,6 +150,7 @@ test('aggregate: fills of one order count once in top trades and activity; All s
   const curve = agg.pnl(sync.states, 'All', now);
   assert.equal(curve.from, now - 400 * 24 * H - 1);
   assert.equal(curve.flows.gross, 41.5);
+  assert.equal(curve.series[0].vals.at(-1), 41.5 - 6, 'net of the 6 fills\' fees');
   const days = agg.activity(sync.states, 60, 'UTC', now);
   assert.equal(days.reduce((s, d) => s + d.count, 0), 6 - 1);
 });
