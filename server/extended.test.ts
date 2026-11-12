@@ -11,9 +11,9 @@ const H = 3600e3;
 const ACCOUNTS: Record<string, { id: number; balance: string | null; positions: string; history: string; funding: string }> = {
   k1: {
     id: 1001,
-    balance: '{"equity":"683.5","availableForTrade":"679.5"}',
-    positions: `[{"id":2077738870304145401,"market":"BTC-USD","status":"OPENED","side":"LONG","leverage":"5","size":"0.1","value":"11000","openPrice":"100000","markPrice":"110000","liquidationPrice":"80000","margin":"220","unrealisedPnl":"1000","paidFundingFee":"0.74","createdAt":${now - 5 * H}},
-                 {"id":2077738870304145402,"market":"XAG-USD","status":"OPENED","side":"SHORT","leverage":"5","size":"0.4","value":"20.2","openPrice":"55.776","markPrice":"50.5","liquidationPrice":"1675.784","margin":"0.404","unrealisedPnl":"2.1","paidFundingFee":"0","createdAt":${now - 4 * H}}]`,
+    balance: '{"equity":"683.5","unrealisedPnl":"902.1104","availableForTrade":"679.5"}',   // uPnL as stale as the positions
+    positions: `[{"id":2077738870304145401,"market":"BTC-USD","status":"OPENED","side":"LONG","leverage":"5","size":"0.1","value":"10900","openPrice":"100000","markPrice":"109000","liquidationPrice":"80000","margin":"218","unrealisedPnl":"900","paidFundingFee":"0.74","createdAt":${now - 5 * H}},
+                 {"id":2077738870304145402,"market":"XAG-USD","status":"OPENED","side":"SHORT","leverage":"5","size":"0.4","value":"20.2","openPrice":"55.776","markPrice":"50.5","liquidationPrice":"1675.784","margin":"0.404","unrealisedPnl":"2.1104","paidFundingFee":"0","createdAt":${now - 4 * H}}]`,
     history: `[{"id":2078423715724394501,"market":"SPX-USD","side":"SHORT","realisedPnl":"0.056914","realisedPnlBreakdown":{"tradePnl":"0.06","fundingFees":"0.004017","openFees":"-0.00382","closeFees":"-0.003283"},"createdTime":${now - 9 * H},"closedTime":${now - 3 * H}},
                {"id":2078423715724394502,"market":"ETH-USD","side":"LONG","realisedPnl":"1","createdTime":${now - 9 * H}}]`,
     funding: `[{"id":221610368,"market":"XAG-USD","positionId":2077738870304145402,"side":"SHORT","fundingFee":"0.000634","paidTime":${now - H}}]`,
@@ -27,6 +27,7 @@ const ACCOUNTS: Record<string, { id: number; balance: string | null; positions: 
   },
 };
 ACCOUNTS.k1dup = ACCOUNTS.k1;   // a second key of the same account
+const MARKS: Record<string, string> = { 'BTC-USD': '110000', 'XAG-USD': '50.5' };   // live marks: BTC moved since the position was updated
 
 function fakeFetch(calls: string[]) {
   return (async (url: string, init: any) => {
@@ -39,6 +40,7 @@ function fakeFetch(calls: string[]) {
       case '/user/account/info': return ok(`{"accountId":${a.id},"description":"Main account"}`);
       case '/user/balance': return a.balance ? ok(a.balance) : new Response('', { status: 404 });
       case '/user/positions': return ok(a.positions);
+      case '/info/markets': return ok(JSON.stringify(u.searchParams.getAll('market').map(m => ({ name: m, marketStats: { markPrice: MARKS[m] } }))));
       case '/user/positions/history': return ok(a.history, '2078423715724394502');
       case '/user/funding/history': return ok(a.funding);
     }
@@ -65,7 +67,7 @@ test('one account: balance, positions, gross trades with fees apart, funding', a
   const { ad, s } = await run(['k1']);
   assert.equal(s.status, 'live');
   assert.equal(ad.label, 'read-only key');
-  assert.equal(s.account?.equity, 683.5);
+  assert.ok(Math.abs(s.account!.equity - 783.5) < 1e-9, 'the stale uPnL (902.1104) is swapped for the live one (1002.1104)');
   assert.equal(s.account?.freeCollateral, 679.5);
 
   const xag = s.positions.find(p => p.symbol === 'XAG')!;
@@ -74,6 +76,8 @@ test('one account: balance, positions, gross trades with fees apart, funding', a
   assert.equal(xag.openedAt, now - 4 * H, 'createdAt, not the documented createdTime');
   const btc = s.positions.find(p => p.symbol === 'BTC')!;
   assert.equal(btc.funding, 0.74, 'paidFundingFee: + = received');
+  assert.equal(btc.mark, 110000, 'live mark of the market, not the position\x27s stale one');
+  assert.equal(btc.upnl, 1000, 'repriced: (110000 − 100000) × 0.1');
   assert.equal(btc.margin, 2200, 'value / leverage as in Extended\x27s UI, not the API margin');
   assert.equal(btc.roe, 1000 / 2200);
 
@@ -90,7 +94,7 @@ test('one account: balance, positions, gross trades with fees apart, funding', a
 test('two accounts merge into one exchange; same market and side become one row', async () => {
   const { ad, s } = await run(['k1', 'k2']);
   assert.equal(ad.label, '2 accounts');
-  assert.equal(s.account?.equity, 683.5, 'the empty account (404) adds 0');
+  assert.ok(Math.abs(s.account!.equity - 783.5) < 1e-9, 'the empty account (404) adds 0');
 
   const btc = s.positions.filter(p => p.symbol === 'BTC');
   assert.equal(btc.length, 1);
@@ -113,8 +117,9 @@ test('two accounts merge into one exchange; same market and side become one row'
 test('a second key of the same account is ignored, not counted twice', async () => {
   const { ad, s, calls, warns } = await run(['k1', 'k1dup']);
   assert.equal(ad.label, 'read-only key');
-  assert.equal(s.account?.equity, 683.5);
+  assert.ok(Math.abs(s.account!.equity - 783.5) < 1e-9);
   assert.equal(s.trades.size, 1);
+  assert.equal(calls.filter(c => c.endsWith('/user/positions')).length, 2, 'account and positions share one read per sync (refreshAll syncs twice)');
   assert.equal(calls.filter(c => c.endsWith('/account/info')).length, 2, 'accounts looked up once, not per call');
   assert.equal(warns.filter(w => w.includes('again')).length, 1);
 });

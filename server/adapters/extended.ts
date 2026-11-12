@@ -16,6 +16,7 @@ export class ExtendedAdapter implements Adapter {
   private readonly keys: string[];
   private unique: { key: string; account: string }[] | null = null;
   private lookup: Promise<{ key: string; account: string }[]> | null = null;
+  private opening: Promise<Json[]> | null = null;
 
   constructor(apiKeys: string[], private readonly fetchImpl: Fetch = fetch) {
     this.keys = apiKeys.map(k => k.trim()).filter(Boolean);
@@ -81,19 +82,50 @@ export class ExtendedAdapter implements Adapter {
     return out;
   }
 
+  /**
+   * Open positions of every account (tagged with it), repriced at the live mark. /user/positions only
+   * refreshes markPrice, value and unrealisedPnl when the position itself changes (seen 2026-11-12:
+   * at the hourly funding), so they can be an hour old. getAccount and getPositions of one sync share the request.
+   */
+  private open(): Promise<Json[]> {
+    this.opening ??= this.readOpen().finally(() => { this.opening = null; });
+    return this.opening;
+  }
+
+  private async readOpen(): Promise<Json[]> {
+    const list: Json[] = await this.each(async (k, account) =>
+      ((await this.get(k, '/user/positions'))?.data ?? []).map((p: Json) => ({ ...p, account })));
+    if (!list.length) return list;
+    const markets = [...new Set(list.map(p => p.market as string))];
+    const stats: Json[] = (await this.get(this.keys[0], `/info/markets?${markets.map(m => `market=${m}`).join('&')}`))?.data ?? [];
+    const marks = new Map(stats.map(m => [m.name, +m.marketStats.markPrice]));
+    return list.map(p => {
+      const mark = marks.get(p.market) ?? +p.markPrice, size = Math.abs(+p.size);
+      const upnl = (mark - +p.openPrice) * size * (sideOf(p.side) === 'Short' ? -1 : 1);
+      return { ...p, markPrice: mark, value: mark * size, unrealisedPnl: upnl };
+    });
+  }
+
   async getAccount(): Promise<Account> {
-    const balances = await this.each(async k => [(await this.get(k, '/user/balance'))?.data]);   // 404 when the balance is 0
+    const [open, balances] = await Promise.all([
+      this.open(),
+      this.each(async (k, account) => {
+        const b = (await this.get(k, '/user/balance'))?.data;   // 404 when the balance is 0
+        return b ? [{ account, b }] : [];
+      }),
+    ]);
+    // equity counts the same stale uPnL as /user/positions: swap it for the live one
+    const live = (account: string) => open.filter(p => p.account === account).reduce((s, p) => s + p.unrealisedPnl, 0);
     return {
       exchange: this.id,
-      equity: balances.reduce((s, b) => s + +(b?.equity ?? 0), 0),
-      freeCollateral: balances.reduce((s, b) => s + +(b?.availableForTrade ?? 0), 0),
+      equity: balances.reduce((s, { account, b }) => s + +b.equity - +b.unrealisedPnl + live(account), 0),
+      freeCollateral: balances.reduce((s, { b }) => s + +(b.availableForTrade ?? 0), 0),
       ts: Date.now(),
     };
   }
 
   async getPositions(): Promise<Position[]> {
-    const list: Json[] = await this.each(async k => (await this.get(k, '/user/positions'))?.data ?? []);
-    return merge(list.map((p): Position => {
+    return merge((await this.open()).map((p): Position => {
       // initial margin, as Extended's UI shows it. The API's own `margin` is smaller
       // (2% of value on a 15x XAU position: it looks like the maintenance margin).
       const leverage = +p.leverage || 1;
