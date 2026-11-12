@@ -4,7 +4,6 @@ import { EXCHANGE_COLOR, RANGE_TEXT, compact, date, tone, usd } from '../format'
 import { Skel } from './Kpis';
 
 const W = 1000, H = 260;
-const niceStep = (v: number) => { const p = 10 ** Math.floor(Math.log10(v)); return [1, 2, 5, 10].map(m => m * p).find(x => x >= v)!; };
 
 export function PnlChart({ pnl, isAll, range }: { pnl?: Pnl; isAll: boolean; range: Range }) {
   const [hidden, setHidden] = useState<Record<string, boolean>>({});
@@ -22,15 +21,9 @@ export function PnlChart({ pnl, isAll, range }: { pnl?: Pnl; isAll: boolean; ran
 
   let mn = 0, mx = 0;
   for (const s of visible) for (const v of s.vals) { if (v < mn) mn = v; if (v > mx) mx = v; }
-  if (mx === mn) mx = mn + 1;
-  const pad = (mx - mn) * 0.08; mn -= pad; mx += pad;
-  // snap the axis to 3 round steps (1, 2 or 5 × 10ⁿ, at least $1) so the 4 labels are distinct round values
-  let s = Math.max(1, niceStep((mx - mn) / 3));
-  for (;;) {
-    const top = Math.ceil(mx / s) * s;
-    if (top - 3 * s <= mn) { mx = top; mn = top - 3 * s; break; }
-    s = niceStep(s * 1.01);
-  }
+  // fit the axis to the data: $20 beyond the largest gain and loss (8% of the span once that is more).
+  // The span is then at least $40, so the 4 whole-dollar labels stay distinct.
+  const pad = Math.max(20, (mx - mn) * 0.08); mn -= pad; mx += pad;
   const y = (v: number) => H - ((v - mn) / (mx - mn)) * H;
   const x = (i: number) => (N > 1 ? (i / (N - 1)) * W : 0);
   const line = (vals: number[]) => vals.map((v, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1)).join('');
@@ -44,7 +37,7 @@ export function PnlChart({ pnl, isAll, range }: { pnl?: Pnl; isAll: boolean; ran
 
   const k = hover == null ? null : Math.min(N - 1, hover);
   const pct = k == null || N < 2 ? 0 : (k / (N - 1)) * 100;
-  const headline = pnl?.flows.net ?? 0;
+  const headline = pnl ? pnl.flows.net + pnl.flows.unrealized : 0;
 
   return (
     <section className="card elev-sm panel curve-panel" style={{ gridArea: 'curve' }}>
@@ -65,7 +58,7 @@ export function PnlChart({ pnl, isAll, range }: { pnl?: Pnl; isAll: boolean; ran
       </div>
       <div className="chart-headline">
         <span className={`num ${tone(headline)}`}>{pnl ? usd(headline, true) : <Skel w={140} />}</span>
-        <span>net over {RANGE_TEXT[range][1]}</span>
+        <span>net + unrealized over {RANGE_TEXT[range][1]}</span>
       </div>
       <div className="chart">
         <div className="chart-y num">{yTicks.map((t, i) => <span key={i}>{pnl ? t : ''}</span>)}</div>

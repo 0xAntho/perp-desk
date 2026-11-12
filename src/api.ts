@@ -13,7 +13,7 @@ export interface Summary { balance: number; upnl: number; updatedAt: number | nu
 export interface Pnl {
   range: Range; from: number; to: number; points: number[];
   series: { id: ExchangeId; name: string; vals: number[] }[];
-  flows: { gross: number; fees: number; funding: number; net: number };
+  flows: { gross: number; fees: number; funding: number; net: number; unrealized: number };
 }
 export type TopTrade = Trade & { net: number };   // realized PnL minus the order's fees
 export interface TopTrades { best: TopTrade[]; worst: TopTrade[] }

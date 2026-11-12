@@ -97,7 +97,9 @@ export function pnl(states: ExchangeState[], range: Range, now = Date.now()) {
   for (let t = from; t < now; t += step * 3600e3) points.push(t);
   points.push(now);
 
-  // the curve is net: each trade adds its realized PnL minus its fee, each funding payment its amount
+  // the curve is net: each trade adds its realized PnL minus its fee, each funding payment its amount.
+  // Open positions add their unrealized PnL to the last point only (no history of it is kept);
+  // once one closes, its trade takes over.
   const series = states.map(s => {
     const trades = [...s.trades.values()].filter(t => t.ts > from && t.ts <= now);
     const payments = [...s.funding.values()].filter(f => f.ts > from && f.ts <= now);
@@ -111,10 +113,12 @@ export function pnl(states: ExchangeState[], range: Range, now = Date.now()) {
       while (i < events.length && events[i].ts <= p) acc += events[i++].v;
       vals.push(acc);
     }
+    const unrealized = upnlOf(s);
+    vals[vals.length - 1] += unrealized;
     const realized = sum(trades.map(t => t.realizedPnl));
     const fees = sum(trades.map(t => t.fee));
     const funding = sum(payments.map(f => f.usdc));
-    return { id: s.adapter.id, name: s.adapter.name, vals, realized, fees, funding };
+    return { id: s.adapter.id, name: s.adapter.name, vals, realized, fees, funding, unrealized };
   });
 
   const gross = sum(series.map(x => x.realized));
@@ -123,7 +127,8 @@ export function pnl(states: ExchangeState[], range: Range, now = Date.now()) {
   return {
     range, from, to: now, points,
     series: series.map(({ id, name, vals }) => ({ id, name, vals })),
-    flows: { gross, fees: -fees, funding, net: gross - fees + funding },
+    // net is realized only; the curve ends at net + unrealized
+    flows: { gross, fees: -fees, funding, net: gross - fees + funding, unrealized: sum(series.map(x => x.unrealized)) },
   };
 }
 

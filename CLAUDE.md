@@ -39,7 +39,7 @@ Personal multi-exchange perp trading dashboard (Hyperliquid, Perpl, Arcus, Exten
 3. Optional: push live marks/uPnL over SSE instead of 15 s polling (plan §6.4).
 
 ## Conventions and decisions
-- Best/worst trades are ranked and shown net of the order's own fees (user's call, 2026-11-09). The PnL curve and its headline are net (realized − fees + funding, user's call 2026-11-10), so the curve ends at the KPI card's "Net".
+- Best/worst trades are ranked and shown net of the order's own fees (user's call, 2026-11-09). The PnL curve and its headline are net (realized − fees + funding, user's call 2026-11-10), and open positions add their unrealized PnL to the curve's last point (user's call 2026-11-12; no uPnL history is kept): the curve and its headline end at the KPI card's "Net" + unrealized, and a closed position switches to its realized trade.
 - Delta-neutral pairs (2026-11-09): the user drags a position onto the opposite leg (or taps the link button on both, for phones) to group one long + one short, on any exchanges/symbols. The DN row shows Σ margin as collateral, Σ uPnL, ROE on that, Σ funding since open (accumulated, not live rates: the user's call); it expands to the legs. Pairs live in SQLite and are dropped when a fresh positions read shows a leg closed. Purely a display grouping, nothing is sent to an exchange.
 - Use read-only exchange keys only. Keys live in `.env` (git-ignored); `.env.example` lists the variables.
 - Keep the UI faithful to the design file. Only the design's "Rail" layout is kept (the user removed Stacked and Bento); it and light/dark must keep working, including at phone width.
