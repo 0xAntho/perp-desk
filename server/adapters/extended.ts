@@ -94,7 +94,10 @@ export class ExtendedAdapter implements Adapter {
   async getPositions(): Promise<Position[]> {
     const list: Json[] = await this.each(async k => (await this.get(k, '/user/positions'))?.data ?? []);
     return merge(list.map((p): Position => {
-      const margin = +p.margin, upnl = +p.unrealisedPnl;
+      // initial margin, as Extended's UI shows it. The API's own `margin` is smaller
+      // (2% of value on a 15x XAU position: it looks like the maintenance margin).
+      const leverage = +p.leverage || 1;
+      const margin = +p.value / leverage, upnl = +p.unrealisedPnl;
       return {
         exchange: this.id,
         sub: null,
@@ -104,8 +107,7 @@ export class ExtendedAdapter implements Adapter {
         entry: +p.openPrice,
         mark: +p.markPrice,
         liq: +p.liquidationPrice || null,
-        leverage: +p.leverage || 1,
-        margin, upnl,
+        leverage, margin, upnl,
         roe: margin ? upnl / margin : 0,
         funding: +(p.paidFundingFee ?? 0),      // despite the name: + = received (= sum of fundingFee)
         openedAt: p.createdAt ?? p.createdTime ?? null,

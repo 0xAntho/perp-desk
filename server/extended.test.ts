@@ -12,8 +12,8 @@ const ACCOUNTS: Record<string, { id: number; balance: string | null; positions: 
   k1: {
     id: 1001,
     balance: '{"equity":"683.5","availableForTrade":"679.5"}',
-    positions: `[{"id":2077738870304145401,"market":"BTC-USD","status":"OPENED","side":"LONG","leverage":"5","size":"0.1","openPrice":"100000","markPrice":"110000","liquidationPrice":"80000","margin":"2000","unrealisedPnl":"1000","paidFundingFee":"0.74","createdAt":${now - 5 * H}},
-                 {"id":2077738870304145402,"market":"XAG-USD","status":"OPENED","side":"SHORT","leverage":"5","size":"0.4","openPrice":"55.776","markPrice":"50.5","liquidationPrice":"1675.784","margin":"1","unrealisedPnl":"2.1","paidFundingFee":"0","createdAt":${now - 4 * H}}]`,
+    positions: `[{"id":2077738870304145401,"market":"BTC-USD","status":"OPENED","side":"LONG","leverage":"5","size":"0.1","value":"11000","openPrice":"100000","markPrice":"110000","liquidationPrice":"80000","margin":"220","unrealisedPnl":"1000","paidFundingFee":"0.74","createdAt":${now - 5 * H}},
+                 {"id":2077738870304145402,"market":"XAG-USD","status":"OPENED","side":"SHORT","leverage":"5","size":"0.4","value":"20.2","openPrice":"55.776","markPrice":"50.5","liquidationPrice":"1675.784","margin":"0.404","unrealisedPnl":"2.1","paidFundingFee":"0","createdAt":${now - 4 * H}}]`,
     history: `[{"id":2078423715724394501,"market":"SPX-USD","side":"SHORT","realisedPnl":"0.056914","realisedPnlBreakdown":{"tradePnl":"0.06","fundingFees":"0.004017","openFees":"-0.00382","closeFees":"-0.003283"},"createdTime":${now - 9 * H},"closedTime":${now - 3 * H}},
                {"id":2078423715724394502,"market":"ETH-USD","side":"LONG","realisedPnl":"1","createdTime":${now - 9 * H}}]`,
     funding: `[{"id":221610368,"market":"XAG-USD","positionId":2077738870304145402,"side":"SHORT","fundingFee":"0.000634","paidTime":${now - H}}]`,
@@ -21,7 +21,7 @@ const ACCOUNTS: Record<string, { id: number; balance: string | null; positions: 
   k2: {
     id: 1002,
     balance: null,   // 404: empty account
-    positions: `[{"id":2077738870304145403,"market":"BTC-USD","status":"OPENED","side":"LONG","leverage":"10","size":"0.3","openPrice":"104000","markPrice":"110000","liquidationPrice":"95000","margin":"3300","unrealisedPnl":"1800","paidFundingFee":"-0.5","createdAt":${now - 8 * H}}]`,
+    positions: `[{"id":2077738870304145403,"market":"BTC-USD","status":"OPENED","side":"LONG","leverage":"10","size":"0.3","value":"33000","openPrice":"104000","markPrice":"110000","liquidationPrice":"95000","margin":"660","unrealisedPnl":"1800","paidFundingFee":"-0.5","createdAt":${now - 8 * H}}]`,
     history: `[{"id":2078423715724394501,"market":"ETH-USD","side":"LONG","realisedPnl":"-2","realisedPnlBreakdown":{"tradePnl":"-1.9","fundingFees":"0","openFees":"-0.05","closeFees":"-0.05"},"createdTime":${now - 7 * H},"closedTime":${now - 2 * H}}]`,
     funding: `[{"id":5,"market":"BTC-USD","positionId":2077738870304145403,"side":"LONG","fundingFee":"-0.5","paidTime":${now - H}}]`,
   },
@@ -72,7 +72,10 @@ test('one account: balance, positions, gross trades with fees apart, funding', a
   assert.equal(xag.side, 'Short');
   assert.equal(xag.liq, 1675.784);
   assert.equal(xag.openedAt, now - 4 * H, 'createdAt, not the documented createdTime');
-  assert.equal(s.positions.find(p => p.symbol === 'BTC')!.funding, 0.74, 'paidFundingFee: + = received');
+  const btc = s.positions.find(p => p.symbol === 'BTC')!;
+  assert.equal(btc.funding, 0.74, 'paidFundingFee: + = received');
+  assert.equal(btc.margin, 2200, 'value / leverage as in Extended\x27s UI, not the API margin');
+  assert.equal(btc.roe, 1000 / 2200);
 
   const trades = [...s.trades.values()];
   assert.equal(trades.length, 1, 'positions without closedTime are still open');
@@ -94,10 +97,10 @@ test('two accounts merge into one exchange; same market and side become one row'
   const p = btc[0];
   assert.ok(Math.abs(p.size - 0.4) < 1e-12);
   assert.equal(p.entry, 103000);           // (100000 × 0.1 + 104000 × 0.3) / 0.4
-  assert.equal(p.margin, 5300);
+  assert.equal(p.margin, 5500);              // 11000 / 5 + 33000 / 10
   assert.equal(p.upnl, 2800);
   assert.equal(p.liq, 95000, 'liq closest to the mark');
-  assert.equal(p.leverage, 110000 * 0.4 / 5300);
+  assert.equal(p.leverage, 110000 * 0.4 / 5500);
   assert.ok(Math.abs(p.funding - 0.24) < 1e-12);
   assert.equal(p.openedAt, now - 8 * H, 'earliest open');
   assert.equal(p.sub, null);
